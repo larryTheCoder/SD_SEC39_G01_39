@@ -1,0 +1,34 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.mudahmail.rpc;
+
+option php_metadata_namespace = "nethergames\\gsms\\rpc\\metadata";
+option php_namespace = "nethergames\\gsms\\rpc";
+
+// Proposal: A notification to the server requires a long grpc calls, a bi-di is suitable
+// for a use-case where a stream of messages are needed to be sent over simultaneously.
+
+enum NotificationType {
+  DOOR_STATE = 0;
+  WEIGHT_STATE = 1;
+  MOVEMENT_DETECTION = 2;
+}
+
+// Registration process
+message RegistrationRequest {
+  string registrationId = 1;    // Client
+  bool unregistered = 2;        // Client
+  string registrationToken = 3; // Client | Server
+  bool registered = 4;          // Server
+}
+
+message NotificationRequest {
+  string registrationId = 1;
+  NotificationType type = 2;
+  string data = 3;
+}
+
+service Mailbox {
+  rpc doAuthentication(RegistrationRequest) returns (RegistrationRequest);
+  rpc doNotification(stream NotificationRequest) returns (stream NotificationRequest);
+}
