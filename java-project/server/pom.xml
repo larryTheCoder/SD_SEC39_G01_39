@@ -19,9 +19,28 @@
 
         <javalin.version>5.6.1</javalin.version>
         <log4j.version>2.20.0</log4j.version>
+        <hibernate-db.version>6.3.0.Final</hibernate-db.version>
+        <postgresql.version>42.6.0</postgresql.version>
+        <jwt.version>4.4.0</jwt.version>
+        <sentry.version>6.25.2</sentry.version>
+        <slf4j.version>2.0.7</slf4j.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.mudahmail</groupId>
+            <artifactId>rpc</artifactId>
+            <version>${revision}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Logging utility -->
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
@@ -32,11 +51,29 @@
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+
+        <!-- Database management tool -->
+
         <dependency>
-            <groupId>org.mudahmail</groupId>
-            <artifactId>rpc</artifactId>
-            <version>${revision}</version>
-            <scope>compile</scope>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate-db.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-hikaricp</artifactId>
+            <version>${hibernate-db.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${jwt.version}</version>
         </dependency>
     </dependencies>
 

@@ -18,8 +18,7 @@ enum NotificationType {
 message RegistrationRequest {
   string registrationId = 1;    // Client
   bool unregistered = 2;        // Client
-  string registrationToken = 3; // Client | Server
-  bool registered = 4;          // Server
+  bool registered = 3;          // Server
 }
 
 message NotificationRequest {

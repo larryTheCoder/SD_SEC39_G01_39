@@ -1,6 +1,8 @@
 package org.mudahmail.server;
 
 import lombok.extern.log4j.Log4j2;
+import org.hibernate.SessionFactory;
+import org.mudahmail.server.database.DatabaseManager;
 import org.mudahmail.server.scheduler.ServerTaskExecutor;
 
 import java.util.Queue;
@@ -14,6 +16,7 @@ public class Service {
     private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     private final ServerTaskExecutor taskManager;
+    private final DatabaseManager databaseManager;
 
     private final Queue<Runnable> notifications = new ConcurrentLinkedQueue<>();
 
@@ -32,6 +35,7 @@ public class Service {
         }));
 
         taskManager = new ServerTaskExecutor();
+        databaseManager = new DatabaseManager();
 
         // TODO: Database
         // TODO: gRPC Server
@@ -55,7 +59,6 @@ public class Service {
 
         shutdown();
     }
-
 
     public void shutdown() {
         if (isRunning.compareAndSet(true, false)) {
