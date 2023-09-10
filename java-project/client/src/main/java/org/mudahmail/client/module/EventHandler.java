@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ManagedChannel;
-import io.grpc.Status;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.log4j.Log4j2;
@@ -39,7 +38,8 @@ public class EventHandler {
     private StreamObserver<NotificationRequest> eventListener = null;
 
     public EventHandler(MailboxClient service) {
-        ManagedChannel channel = NettyChannelBuilder.forAddress(new InetSocketAddress(Constants.SERVER_ADDRESS, Constants.SERVER_PORT))
+        log.info("Connecting to gRPC server: {} {} ", System.getenv("SERVER_ADDRESS"), System.getenv("SERVER_PORT"));
+        ManagedChannel channel = NettyChannelBuilder.forAddress(new InetSocketAddress(Constants.SERVER_ADDRESS, 5000))
                 .enableRetry()
                 .usePlaintext()
                 .build();
@@ -71,7 +71,7 @@ public class EventHandler {
     /**
      * Send weight to the backend server
      */
-    public void sendEventWeight(float weight) {
+    public void sendEventWeight(double weight) {
         try {
             NotificationRequest request = NotificationRequest.newBuilder()
                     .setRegistrationId(Constants.CLIENT_AUTH_ID)
@@ -93,9 +93,15 @@ public class EventHandler {
                 .build();
 
         asyncStub.startAuthHandler(request, new StreamObserver<>() {
+            private boolean isRegistered = false;
+
             @Override
             public void onNext(RegistrationRequest value) {
-                if (value.getRegistered()) {
+                isRegistered = value.getRegistered();
+
+                if (isRegistered) {
+                    log.info("Received registration status! Starting event listener.");
+
                     startEventListeners();
                 }
             }
@@ -113,7 +119,9 @@ public class EventHandler {
             }
 
             private void restartRegistration() {
-                ServerTaskExecutor.schedule(EventHandler.this::startConnection, 5, TimeUnit.SECONDS);
+                if (!isRegistered) {
+                    ServerTaskExecutor.schedule(EventHandler.this::startConnection, 5, TimeUnit.SECONDS);
+                }
             }
         });
     }
@@ -138,42 +146,51 @@ public class EventHandler {
                         eventListener.onNext(notification);
                     }
 
+                    log.info("Connection to the server has been established.");
+
                     firstConnection = false;
                 }
 
                 try {
                     if (value.getType() == NotificationType.DOOR_STATE) {
-                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {});
+                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {
+                        });
 
-                        var state = DoorEventState.valueOf(states.get("state"));
-                        if (state == DoorEventState.OPEN) {
-                            client.getRelayAdapter().unlockDevice();
-                        } else {
-                            client.getRelayAdapter().lockDevice();
+                        if (states.containsKey("state")) {
+                            var state = DoorEventState.valueOf(states.get("state"));
+                            if (state == DoorEventState.OPEN) {
+                                client.getRelayAdapter().unlockDevice();
+                            } else {
+                                client.getRelayAdapter().lockDevice();
+                            }
+                        } else if (states.containsKey("registration")) {
+                            client.getFingerprintAdapter().registerFingerprint();
                         }
 
                         log.info("Processed door state event requested by the server.");
                     }
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    log.throwing(e);
                 }
             }
 
             @Override
             public void onError(Throwable t) {
-                if (Status.fromThrowable(t).getCode() != Status.Code.CANCELLED) {
-                    log.error("Received an error: ", t);
-                }
+                log.error("Received an error: ", t);
 
                 restartConnection();
             }
 
             @Override
             public void onCompleted() {
+                log.info("Completed...");
+
                 restartConnection();
             }
 
             private void restartConnection() {
+                log.info("Restarting connection...");
+
                 eventListener = null;
 
                 ServerTaskExecutor.schedule(EventHandler.this::startEventListeners, 5, TimeUnit.SECONDS);
@@ -189,8 +206,10 @@ public class EventHandler {
         }
     }
 
-    enum DoorEventState {
+    public enum DoorEventState {
         OPEN,
         CLOSE,
+        LOCK,
+        UNLOCKED,
     }
 }

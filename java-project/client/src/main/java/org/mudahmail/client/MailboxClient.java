@@ -2,12 +2,16 @@ package org.mudahmail.client;
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
+import com.pi4j.util.Console;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.mudahmail.client.adapters.FingerprintAdapter;
+import org.mudahmail.client.adapters.MagnetAdapter;
 import org.mudahmail.client.adapters.RelayAdapter;
 import org.mudahmail.client.adapters.WeightAdapter;
 import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.scheduler.ServerTaskExecutor;
+import org.mudahmail.client.utils.PrintInfo;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -31,8 +35,9 @@ public class MailboxClient {
     private final Context pi4j;
     private final RelayAdapter relayAdapter;
     private final WeightAdapter weightAdapter;
+    private final FingerprintAdapter fingerprintAdapter;
 
-    public MailboxClient() {
+    public MailboxClient() throws ClassNotFoundException {
         log.info("Starting Backend Client (Mailbox Business Logic)");
 
         instance = this;
@@ -53,8 +58,17 @@ public class MailboxClient {
 
         pi4j = Pi4J.newAutoContext();
 
-        relayAdapter = new RelayAdapter(pi4j); // Relay switch for the locking mechanism
-        weightAdapter = new WeightAdapter(pi4j); //
+        final var console = new Console();
+
+        PrintInfo.printProviders(console, pi4j);
+
+        relayAdapter = new RelayAdapter(this, pi4j);
+        weightAdapter = new WeightAdapter(this, pi4j);
+        fingerprintAdapter = new FingerprintAdapter(this);
+        new MagnetAdapter(this, pi4j);
+
+        // OPTIONAL: print the registry
+        PrintInfo.printRegistry(console, pi4j);
     }
 
     public void start(Consumer<MailboxClient> startHook) {

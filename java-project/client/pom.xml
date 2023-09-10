@@ -17,6 +17,14 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <crowpi.hostname>crowpi</crowpi.hostname>
+        <crowpi.ipnumber>192.168.1.74</crowpi.ipnumber>  <!-- change to concrete ip-number if hostname is not unique in wlan -->
+        <crowpi.port>22</crowpi.port>
+        <crowpi.username>pi</crowpi.username>
+        <crowpi.password>pi4j2023</crowpi.password>
+        <crowpi.deploydirectory>/home/pi/deploy</crowpi.deploydirectory>
+        <crowpi.jvmOptions/>
+
         <javalin.version>5.6.1</javalin.version>
         <log4j.version>2.20.0</log4j.version>
         <pi4j.version>2.3.0</pi4j.version>
@@ -94,80 +102,63 @@
         <finalName>Client</finalName>
 
         <plugins>
+            <!--
+            https://maven.apache.org/plugins/maven-compiler-plugin/
+            The Compiler Plugin is used to compile the sources of your project.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <release>17</release>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <verbose>false</verbose>
+                </configuration>
+            </plugin>
+
+            <!--
+            https://maven.apache.org/plugins/maven-jar-plugin/
+            This plugin provides the capability to build (executable) jars and is used here to set the mainClass
+            which will start the application.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.mudahmail.client.Bootstrap</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!--
+            https://maven.apache.org/plugins/maven-shade-plugin/
+            This plugin provides the capability to package the artifact in an uber-jar, including its dependencies and
+            to shade - i.e. rename - the packages of some of the dependencies. The transformer will combine the files
+            in the META-INF.services directories of multiple Pi4J plugins with the same package name into one file.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    </transformers>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>
-                                        org.mudahmail.server.Bootstrap
-                                    </mainClass>
-                                </manifest>
-                            </archive>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </annotationProcessorPath>
-                        <annotationProcessorPath>
-                            <groupId>io.javalin.community.openapi</groupId>
-                            <artifactId>openapi-annotation-processor</artifactId>
-                            <version>${javalin.version}</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
-
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>4.9.10</version>
-                <executions>
-                    <execution>
-                        <id>get-the-git-infos</id>
-                        <goals>
-                            <goal>revision</goal>
+                            <goal>shade</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <dateFormatTimeZone>${user.timezone}</dateFormatTimeZone>
-                    <verbose>true</verbose>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <skipPoms>true</skipPoms>
-                    <injectAllReactorProjects>false</injectAllReactorProjects>
-                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
-                    <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-                    <runOnlyOnce>false</runOnlyOnce>
-                    <excludeProperties>
-                        <excludeProperty>git.user.*</excludeProperty>
-                    </excludeProperties>
-                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,12 +1,20 @@
 package sk.mimac.fingerprint.adafruit;
 
-import sk.mimac.fingerprint.FingerprintSensor;
 import gnu.io.NRSerialPort;
-import java.io.*;
-import java.util.*;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sk.mimac.fingerprint.FingerprintException;
+import sk.mimac.fingerprint.FingerprintSensor;
 import sk.mimac.fingerprint.SensorParameters;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static sk.mimac.fingerprint.adafruit.AdafruitConstants.*;
 
 /**
@@ -36,7 +44,7 @@ public class AdafruitSensor implements FingerprintSensor {
      * Construct sensor class.
      *
      * @param serialPort where the fingerprint sensor is connected
-     * @param baudRate of the sensor's serial interface (default is 57600)
+     * @param baudRate   of the sensor's serial interface (default is 57600)
      */
     public AdafruitSensor(String serialPort, int baudRate) {
         serial = new NRSerialPort(serialPort, baudRate);
@@ -54,6 +62,10 @@ public class AdafruitSensor implements FingerprintSensor {
         if ((reply[0] != FINGERPRINT_ACKPACKET) || (reply[1] != FINGERPRINT_OK)) {
             throw new FingerprintException("Can't initialize fingerprint sensor, reply is: " + bytesToHex(reply), "sensor.cant.connect");
         }
+    }
+
+    public boolean isConnected() {
+        return serial.isConnected();
     }
 
     @Override
