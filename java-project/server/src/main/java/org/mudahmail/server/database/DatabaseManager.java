@@ -1,9 +1,13 @@
 package org.mudahmail.server.database;
 
-import com.google.common.base.MoreObjects;
+import jakarta.persistence.EntityManager;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
+import org.mudahmail.rpc.NotificationRequest;
+import org.mudahmail.server.models.Events;
+import org.mudahmail.server.models.MailboxEntity;
 
 @Log4j2(topic = "DatabaseManager")
 public class DatabaseManager {
@@ -25,11 +29,36 @@ public class DatabaseManager {
         }
     }
 
+    @Getter
+    private final EntityManager entityManager;
+
     public static SessionFactory getSessionFactory() {
         return sessionFactory;
     }
 
     public DatabaseManager() {
+        this.entityManager = getSessionFactory().createEntityManager();
+    }
 
+    public MailboxEntity getDeviceById(String id) {
+        return getEntityManager().find(MailboxEntity.class, id);
+    }
+
+    public void updateNotification(NotificationRequest request) {
+        var device = getDeviceById(request.getRegistrationId());
+
+        Events event = new Events();
+        event.setDevice(device);
+        switch (request.getType()) {
+            case DOOR_STATE -> event.setEventType(Events.MailEvent.DOOR_STATE);
+            case WEIGHT_STATE -> event.setEventType(Events.MailEvent.WEIGHT_STATE);
+            case MOVEMENT_DETECTION -> event.setEventType(Events.MailEvent.MOVEMENT_DETECTION);
+        }
+        event.setJsonData(request.getData());
+        event.setTimestamp(request.getTimestamp());
+
+        getEntityManager().getTransaction().begin();
+        getEntityManager().persist(event);
+        getEntityManager().getTransaction().commit();
     }
 }

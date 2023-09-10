@@ -1,8 +1,9 @@
 package org.mudahmail.server;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.hibernate.SessionFactory;
 import org.mudahmail.server.database.DatabaseManager;
+import org.mudahmail.server.impl.MailboxService;
 import org.mudahmail.server.scheduler.ServerTaskExecutor;
 
 import java.util.Queue;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+@Getter
 @Log4j2(topic = "Server")
 public class Service {
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
@@ -19,6 +21,7 @@ public class Service {
     private final DatabaseManager databaseManager;
 
     private final Queue<Runnable> notifications = new ConcurrentLinkedQueue<>();
+    private final MailboxService webService;
 
     public Service() {
         log.info("Starting Backend Server (Mailbox Business Logic)");
@@ -36,9 +39,8 @@ public class Service {
 
         taskManager = new ServerTaskExecutor();
         databaseManager = new DatabaseManager();
+        webService = new MailboxService(this, 5000);
 
-        // TODO: Database
-        // TODO: gRPC Server
         // TODO: Start tasks and init stuff.
     }
 
@@ -73,6 +75,7 @@ public class Service {
             log.warn("Stopping Server gracefully.");
 
             taskManager.shutdown();
+            webService.shutdown();
 
             log.warn("Server service has been gracefully stopped, program exited.");
         } catch (Throwable error) {

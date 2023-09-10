@@ -9,6 +9,7 @@ import java.sql.Blob;
 public class BiometricInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "biometric_id")
     private Long biometricId;
 
     @Lob
@@ -17,5 +18,5 @@ public class BiometricInfo {
     private Blob image;
 
     @ManyToOne
-    private Mailbox device;
+    private MailboxEntity device;
 }

@@ -4,23 +4,25 @@
 
 <hibernate-configuration>
     <session-factory>
-        <property name="hibernate.hbm2ddl.auto">update</property>
-
         <!-- Other Hibernate properties -->
         <property name="hibernate.show_sql">true</property> <!-- Enable SQL logging -->
 
         <!-- Use HikariCP as the connection pool -->
         <property name="hibernate.connection.provider_class">org.hibernate.hikaricp.internal.HikariCPConnectionProvider</property>
         <property name="hibernate.connection.url">${db.connectionUrl}</property>
-        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.driver_class">org.mariadb.jdbc.Driver</property>
 
         <property name="hibernate.hikari.username">${db.username}</property>
         <property name="hibernate.hikari.password">${db.password}</property>
         <property name="hibernate.hikari.minimumIdle">5</property> <!-- Minimum number of idle connections -->
         <property name="hibernate.hikari.maximumPoolSize">20</property> <!-- Maximum number of connections -->
 
+        <!-- Should perform database migration automatically. -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <!-- SQL Mapping classes for Hibernate ORM. -->
         <mapping class="org.mudahmail.server.models.BiometricInfo"/>
-        <mapping class="org.mudahmail.server.models.Mailbox"/>
+        <mapping class="org.mudahmail.server.models.MailboxEntity"/>
         <mapping class="org.mudahmail.server.models.Events"/>
     </session-factory>
 </hibernate-configuration>

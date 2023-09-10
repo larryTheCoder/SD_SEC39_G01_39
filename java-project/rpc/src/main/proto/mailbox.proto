@@ -2,6 +2,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.mudahmail.rpc;
 
+import "google/protobuf/empty.proto";
+
 // Proposal: A notification to the server requires a long grpc calls, a bi-di is suitable
 // for a use-case where a stream of messages are needed to be sent over simultaneously.
 
@@ -9,6 +11,7 @@ enum NotificationType {
   DOOR_STATE = 0;
   WEIGHT_STATE = 1;
   MOVEMENT_DETECTION = 2;
+  REQUEST_HELLO = 3;
 }
 
 // Registration process
@@ -22,9 +25,12 @@ message NotificationRequest {
   string registrationId = 1;
   NotificationType type = 2;
   string data = 3;
+  int64 timestamp = 4;
 }
 
 service Mailbox {
-  rpc doAuthentication(RegistrationRequest) returns (RegistrationRequest);
-  rpc doNotification(stream NotificationRequest) returns (stream NotificationRequest);
+  rpc startAuthHandler(RegistrationRequest) returns (RegistrationRequest);
+  rpc startEventListener(stream NotificationRequest) returns (stream NotificationRequest);
+
+  rpc testEventListener(NotificationRequest) returns (google.protobuf.Empty);
 }

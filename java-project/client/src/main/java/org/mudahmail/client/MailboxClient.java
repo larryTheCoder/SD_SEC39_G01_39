@@ -1,19 +1,16 @@
 package org.mudahmail.client;
 
-import io.grpc.ManagedChannel;
-import io.grpc.netty.NettyChannelBuilder;
-import io.grpc.stub.StreamObserver;
+import com.pi4j.Pi4J;
+import com.pi4j.context.Context;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.mudahmail.client.adapters.RelayAdapter;
+import org.mudahmail.client.adapters.WeightAdapter;
+import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.scheduler.ServerTaskExecutor;
-import org.mudahmail.client.utils.Constants;
-import org.mudahmail.rpc.MailboxGrpc;
-import org.mudahmail.rpc.RegistrationRequest;
 
-import java.net.InetSocketAddress;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -23,17 +20,17 @@ public class MailboxClient {
     @Getter
     private static MailboxClient instance;
 
-    private final ManagedChannel channel;
-    private final MailboxGrpc.MailboxStub asyncStub;
-    private final MailboxGrpc.MailboxBlockingStub stub;
-    private final MailboxGrpc.MailboxFutureStub futureStub;
-
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     private final ServerTaskExecutor taskManager;
+    private final EventHandler eventHandler;
 
     private final Queue<Runnable> notifications = new ConcurrentLinkedQueue<>();
+
+    private final Context pi4j;
+    private final RelayAdapter relayAdapter;
+    private final WeightAdapter weightAdapter;
 
     public MailboxClient() {
         log.info("Starting Backend Client (Mailbox Business Logic)");
@@ -51,54 +48,13 @@ public class MailboxClient {
             }
         }));
 
-        channel = NettyChannelBuilder.forAddress(new InetSocketAddress(Constants.SERVER_ADDRESS, Constants.SERVER_PORT)).enableRetry().usePlaintext().build();
-        asyncStub = MailboxGrpc.newStub(this.channel);
-        stub = MailboxGrpc.newBlockingStub(this.channel);
-        futureStub = MailboxGrpc.newFutureStub(this.channel);
-
         taskManager = new ServerTaskExecutor();
+        eventHandler = new EventHandler(this);
 
-        // TODO: Start tasks and init stuff (to read sensors... etc).
+        pi4j = Pi4J.newAutoContext();
 
-        startConnection();
-    }
-
-    private void startConnection() {
-        RegistrationRequest request = RegistrationRequest.newBuilder()
-                .setRegistrationId(Constants.CLIENT_AUTH_ID)
-                .setUnregistered(false)
-                .build();
-
-        asyncStub.doAuthentication(request, new StreamObserver<>() {
-            @Override
-            public void onNext(RegistrationRequest value) {
-                if (!value.getRegistered()) {
-                    restartRegistration();
-                } else {
-                    startEventListeners();
-                }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                log.throwing(throwable);
-
-                restartRegistration();
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-
-            private void restartRegistration() {
-                ServerTaskExecutor.schedule(MailboxClient.this::startConnection, 5, TimeUnit.SECONDS);
-            }
-        });
-    }
-
-    private void startEventListeners() {
-
+        relayAdapter = new RelayAdapter(pi4j); // Relay switch for the locking mechanism
+        weightAdapter = new WeightAdapter(pi4j); //
     }
 
     public void start(Consumer<MailboxClient> startHook) {
@@ -118,7 +74,6 @@ public class MailboxClient {
 
         shutdown();
     }
-
 
     public void shutdown() {
         if (isRunning.compareAndSet(true, false)) {

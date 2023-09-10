@@ -30,4 +30,8 @@ public class MailboxService {
 
         log.info("GRPC Service started on port {}", port);
     }
+
+    public void shutdown() throws InterruptedException {
+        getServer().shutdownNow().awaitTermination();
+    }
 }

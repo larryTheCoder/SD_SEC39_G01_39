@@ -21,6 +21,7 @@
         <log4j.version>2.20.0</log4j.version>
         <hibernate-db.version>6.3.0.Final</hibernate-db.version>
         <postgresql.version>42.6.0</postgresql.version>
+        <mariadb-client.version>3.1.4</mariadb-client.version>
         <jwt.version>4.4.0</jwt.version>
         <sentry.version>6.25.2</sentry.version>
         <slf4j.version>2.0.7</slf4j.version>
@@ -55,10 +56,15 @@
         <!-- Database management tool -->
 
         <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${mariadb-client.version}</version>
+        </dependency>
+        <!-- dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
-        </dependency>
+        </dependency -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
