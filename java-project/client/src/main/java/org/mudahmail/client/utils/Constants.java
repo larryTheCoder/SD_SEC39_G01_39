@@ -12,5 +12,7 @@ public class Constants {
     public static final int GPIO_PORT_HX711_SCK = 15;
     public static final int GPIO_PORT_HX711_DAT = 16;
 
+    public static final int GPIO_PORT_RESET_PACKAGE = 23;
     public static final int GPIO_PORT_MAGNET_SENSOR = 24;
+    public static final int GPIO_PORT_STATUS_NETWORK = 26;
 }

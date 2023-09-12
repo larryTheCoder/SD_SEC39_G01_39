@@ -5,7 +5,9 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,14 +22,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ServerTaskExecutor {
     private static int taskId = 0;
     private static int currentTick = 0;
-    private static final Set<TaskMetadata> tasks = new LinkedHashSet<>();
+    private static final List<TaskMetadata> tasks = new ArrayList<>();
 
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1, new ServerThreadExecutor());
 
     public void tick() {
         currentTick++;
 
-        tasks.stream().filter(i -> (currentTick - i.getLastTick() - i.getDelay()) >= 0).forEachOrdered(task -> {
+        var list = tasks.stream().filter(i -> (currentTick - i.getLastTick() - i.getDelay()) >= 0).toList();
+
+        list.forEach(task -> {
             boolean remove = false;
             try {
                 if (task.isAsync()) {

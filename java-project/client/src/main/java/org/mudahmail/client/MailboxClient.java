@@ -5,10 +5,7 @@ import com.pi4j.context.Context;
 import com.pi4j.util.Console;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.mudahmail.client.adapters.FingerprintAdapter;
-import org.mudahmail.client.adapters.MagnetAdapter;
-import org.mudahmail.client.adapters.RelayAdapter;
-import org.mudahmail.client.adapters.WeightAdapter;
+import org.mudahmail.client.adapters.*;
 import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.scheduler.ServerTaskExecutor;
 import org.mudahmail.client.utils.PrintInfo;
@@ -36,6 +33,7 @@ public class MailboxClient {
     private final RelayAdapter relayAdapter;
     private final WeightAdapter weightAdapter;
     private final FingerprintAdapter fingerprintAdapter;
+    private final StatusAdapter statusAdapter;
 
     public MailboxClient() throws ClassNotFoundException {
         log.info("Starting Backend Client (Mailbox Business Logic)");
@@ -65,6 +63,9 @@ public class MailboxClient {
         relayAdapter = new RelayAdapter(this, pi4j);
         weightAdapter = new WeightAdapter(this, pi4j);
         fingerprintAdapter = new FingerprintAdapter(this);
+        statusAdapter = new StatusAdapter(pi4j);
+
+        new ResetAdapter(pi4j);
         new MagnetAdapter(this, pi4j);
 
         // OPTIONAL: print the registry

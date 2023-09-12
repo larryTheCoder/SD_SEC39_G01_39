@@ -125,10 +125,17 @@ public class WeightAdapter implements Runnable {
 
         // Do locking mechanism.
         if (averageWeight > MINIMUM_WEIGHT) {
-            log.info("Above minimum, {}", delayWait);
-            if ((--delayWait) <= 0) {
-                client.getRelayAdapter().lockDevice();
-                client.getEventHandler().sendEventWeight(averageWeight);
+            log.info("Above minimum, {} {}", delayWait, client.getRelayAdapter().isLocked());
+
+            if (!client.getRelayAdapter().isLocked()) {
+                delayWait = Math.max(--delayWait, 0);
+
+                if (delayWait == 0) {
+                    client.getRelayAdapter().lockDevice();
+                    client.getEventHandler().sendEventWeight(averageWeight);
+
+                    delayWait = 30;
+                }
             }
         } else {
             delayWait = 10;

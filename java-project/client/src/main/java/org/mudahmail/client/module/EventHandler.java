@@ -148,6 +148,8 @@ public class EventHandler {
 
                     log.info("Connection to the server has been established.");
 
+                    client.getStatusAdapter().setConnected(true);
+
                     firstConnection = false;
                 }
 
@@ -192,6 +194,8 @@ public class EventHandler {
                 log.info("Restarting connection...");
 
                 eventListener = null;
+
+                client.getStatusAdapter().setConnected(false);
 
                 ServerTaskExecutor.schedule(EventHandler.this::startEventListeners, 5, TimeUnit.SECONDS);
             }

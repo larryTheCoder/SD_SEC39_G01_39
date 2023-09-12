@@ -30,18 +30,22 @@ public class RelayAdapter {
     }
 
     public void unlockDevice() {
-        if (output.state() != DigitalState.HIGH) {
-            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.LOCK);
+        if (isLocked()) {
+            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.UNLOCKED);
 
             output.high();
         }
     }
 
     public void lockDevice() {
-        if (output.state() != DigitalState.LOW) {
-            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.UNLOCKED);
+        if (!isLocked()) {
+            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.LOCK);
 
             output.low();
         }
+    }
+
+    public boolean isLocked() {
+        return output.state() != DigitalState.HIGH;
     }
 }
