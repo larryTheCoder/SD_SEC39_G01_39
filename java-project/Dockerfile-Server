@@ -1,0 +1,23 @@
+#
+# Build stage
+#
+FROM maven:3.8.5-openjdk-17-slim AS build
+WORKDIR /home
+
+COPY client /home/app/client
+COPY rpc /home/app/rpc
+COPY server /home/app/server
+COPY pom.xml /home/app
+
+RUN mvn -f /home/app/pom.xml clean package
+
+FROM openjdk:17-jdk-slim
+
+EXPOSE 5000/tcp
+EXPOSE 5000/udp
+
+WORKDIR /home
+
+COPY --from=build /home/app/server/target/Server.jar /home
+
+ENTRYPOINT ["java", "-jar", "Server.jar"]
