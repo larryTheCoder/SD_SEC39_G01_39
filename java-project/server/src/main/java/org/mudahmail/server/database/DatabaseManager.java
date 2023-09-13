@@ -47,18 +47,20 @@ public class DatabaseManager {
     public void updateNotification(NotificationRequest request) {
         var device = getDeviceById(request.getRegistrationId());
 
-        Events event = new Events();
-        event.setDevice(device);
-        switch (request.getType()) {
-            case DOOR_STATE -> event.setEventType(Events.MailEvent.DOOR_STATE);
-            case WEIGHT_STATE -> event.setEventType(Events.MailEvent.WEIGHT_STATE);
-            case MOVEMENT_DETECTION -> event.setEventType(Events.MailEvent.MOVEMENT_DETECTION);
-        }
-        event.setJsonData(request.getData());
-        event.setTimestamp(request.getTimestamp());
+        try (var session = getSessionFactory().getCurrentSession()) {
+            Events event = new Events();
+            event.setDevice(device);
+            switch (request.getType()) {
+                case DOOR_STATE -> event.setEventType(Events.MailEvent.DOOR_STATE);
+                case WEIGHT_STATE -> event.setEventType(Events.MailEvent.WEIGHT_STATE);
+                case MOVEMENT_DETECTION -> event.setEventType(Events.MailEvent.MOVEMENT_DETECTION);
+            }
+            event.setJsonData(request.getData());
+            event.setTimestamp(request.getTimestamp());
 
-        getEntityManager().getTransaction().begin();
-        getEntityManager().persist(event);
-        getEntityManager().getTransaction().commit();
+            session.beginTransaction();
+            session.persist(event);
+            session.getTransaction().commit();
+        }
     }
 }

@@ -7,6 +7,9 @@
         <!-- Other Hibernate properties -->
         <property name="hibernate.show_sql">true</property> <!-- Enable SQL logging -->
 
+        <!-- Session context for multithreading purposes -->
+        <property name="hibernate.current_session_context_class">thread</property>
+
         <!-- Use HikariCP as the connection pool -->
         <property name="hibernate.connection.provider_class">org.hibernate.hikaricp.internal.HikariCPConnectionProvider</property>
         <property name="hibernate.connection.url">${db.connectionUrl}</property>
