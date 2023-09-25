@@ -15,8 +15,6 @@ export default function Home() {
     })
 
     const onSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
         console.log("Email: " + formData.email)
         console.log("Password: " + formData.password)
         console.log("Remember: " + formData.remember)
@@ -28,7 +26,7 @@ export default function Home() {
         <CardMenu title="Sign in to your account">
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
                 <EmailTextBox onChange={(e) => setFormData({...formData, email: e})}/>
-                <PasswordInputBox onChange={(e) => setFormData({...formData, password: e})} pattern=".{8,}" showTooltip={true} inputName="password" titleName="Password"/>
+                <PasswordInputBox onChange={(e) => setFormData({...formData, password: e})} pattern=".{8,}" showTooltip={true} isDisabled={false} inputName="password" titleName="Password"/>
 
                 {/* Remember me and Forgot password button */}
 
@@ -44,7 +42,7 @@ export default function Home() {
                             <label htmlFor="remember" className="text-gray-500">Remember me</label>
                         </div>
                     </div>
-                    <a href="#" className="text-sm font-medium text-primary-600 hover:underline">
+                    <a href="/reset" className="text-sm font-medium text-primary-600 hover:underline">
                         Forgot password?
                     </a>
                 </div>

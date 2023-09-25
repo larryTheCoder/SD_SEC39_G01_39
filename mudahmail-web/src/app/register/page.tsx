@@ -47,13 +47,18 @@ export default function Home() {
     const onBlur = () => {
         // Verify token here.
 
+        if (!(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/).test(registrationData.authToken)) {
+            setOutput({formOutput: undefined});
+            return;
+        }
+
         // 0 - Validating token
         // 1 - Token is not used by anyone
         // 2 - Token is being used by another user
         // 3 - Token is not available.
         const modeToken: number = 2;
 
-        switch (modeToken){
+        switch (modeToken) {
             case 0:
                 setOutput({formOutput: (<p><Loading/>Validating your device identifier.</p>)})
                 break;
@@ -105,8 +110,8 @@ export default function Home() {
                 </div>
 
                 <EmailTextBox onChange={(email) => setRegistrationData({...registrationData, emailAddress: email})} isDisabled={animation.unverified}/>
-                <PasswordInputBox onChange={(password) => setRegistrationData({...registrationData, password: password})} titleName="Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified}/>
-                <PasswordInputBox onChange={(password) => setRegistrationData({...registrationData, confirmPassword: password})} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified}/>
+                <PasswordInputBox onChange={(password) => setRegistrationData({...registrationData, password: password})} titleName="Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
+                <PasswordInputBox onChange={(password) => setRegistrationData({...registrationData, confirmPassword: password})} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
 
                 <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
                     <p>{(validate.length && <Success/>) || (<Failed/>)}Minimum 8 characters long</p>

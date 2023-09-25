@@ -4,7 +4,7 @@ import {Loading} from "@/app/components/loading";
 
 export function EmailTextBox({onChange, isDisabled}: {
     onChange: (value: string) => void
-    isDisabled?: boolean
+    isDisabled: boolean
 }) {
     return (
         <section>
@@ -18,7 +18,7 @@ export function EmailTextBox({onChange, isDisabled}: {
                    className="bg-gray-50 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
                    placeholder="username@gmail.com"
                    required={true}
-                   disabled={isDisabled}
+                   disabled={isDisabled ?? false}
                    pattern="/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i"
             />
             <span className="mt-2 hidden text-sm text-red-500 peer-[&:not(:placeholder-shown):not(:focus):invalid]:block">
@@ -34,8 +34,8 @@ export function PasswordInputBox({onChange, titleName, pattern, showTooltip, inp
     titleName: string
     pattern: string
     inputName: string
-    showTooltip?: boolean
-    isDisabled?: boolean
+    showTooltip: boolean
+    isDisabled: boolean
 }){
     return (
         <section>
