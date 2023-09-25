@@ -25,7 +25,7 @@ export default function Home() {
     return (
         <CardMenu title="Sign in to your account">
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
-                <EmailTextBox onChange={(e) => setFormData({...formData, email: e})}/>
+                <EmailTextBox onChange={(e) => setFormData({...formData, email: e})} isDisabled={false}/>
                 <PasswordInputBox onChange={(e) => setFormData({...formData, password: e})} pattern=".{8,}" showTooltip={true} isDisabled={false} inputName="password" titleName="Password"/>
 
                 {/* Remember me and Forgot password button */}
