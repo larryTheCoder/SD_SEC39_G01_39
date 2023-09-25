@@ -11,7 +11,7 @@ export function CardMenu({children, title}: {
                 <a href="#" className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
                     <Image
                         className="w-12 h-12 mr-2"
-                        src="/MudahMail.svg"
+                        src="/mudahmail.svg"
                         alt="MudahMail logo"
                         width={350}
                         height={37}

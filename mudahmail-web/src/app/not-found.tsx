@@ -13,7 +13,7 @@ export default function NotFound() {
             <div className="flex justify-center">
                 <Image
                     className="content-center mx-4"
-                    src="/MudahMail.svg"
+                    src="/mudahmail.svg"
                     alt="MudahMail logo"
                     width={250}
                     height={250}
