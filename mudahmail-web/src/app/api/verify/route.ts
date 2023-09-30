@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import {SignJWT} from "jose";
-import {getJwtSecretKey, verifyJwtToken} from "@/libs/auth";
+import {verifyJwtToken} from "@/libs/auth";
 import {prisma} from "@/libs/database";
 
 export async function GET(
@@ -29,16 +28,16 @@ export async function GET(
         where: {email: actual_email}
     });
 
-    if (searchResult === null) {
+    if (searchResult === null || searchResult.isVerified) {
         return NextResponse.json({error: "not found"}, {status: 404});
     }
 
-    const signed_token = await new SignJWT({
-        id: searchResult.userSnowflake,
-    }).setProtectedHeader({alg: "HS256"})
-        .setIssuedAt()
-        .setExpirationTime("24h")
-        .sign(getJwtSecretKey())
+    await prisma.userData.update({
+        where: {email: actual_email},
+        data: {
+            isVerified: true
+        }
+    })
 
-    return NextResponse.json({token: signed_token}, {status: 200})
+    return NextResponse.json({}, {status: 200})
 }
