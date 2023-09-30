@@ -21,38 +21,41 @@ export async function POST(
 
         let userData = await prisma.userData.findFirst({
             where: {AND: [{email: inputData.emailAddress}]},
-            select: {email: true}
+            select: {email: true, isVerified: true}
         });
 
-        if (userData !== null) {
-            return NextResponse.json({message: 'User is already registered.'}, {status: 409})
+        if (userData !== null && userData.isVerified) {
+            return NextResponse.json({message: 'The email is already in use, please try another email.'}, {status: 409})
         }
 
         const resultFound = await prisma.mailbox.findFirst({where: {auth_token: inputData.authToken}})
         const resultRegistered = await prisma.userData.findFirst({where: {device_auth_token: inputData.authToken}})
 
         if ((resultFound !== null && resultRegistered !== null) || resultFound === null) {
-            return NextResponse.json({message: 'Not found'}, {status: 404})
+            return NextResponse.json({message: 'The token provided were not found.'}, {status: 404})
         }
 
         const clientId = Snowflake.generate();
-        await prisma.userData.create({
-            data: {
+        await prisma.userData.upsert({
+            where: {
+                email: inputData.emailAddress,
+            },
+            create: {
                 userSnowflake: clientId,
                 email: inputData.emailAddress,
                 device_auth_token: inputData.authToken,
                 password: await bcrypt.hash(inputData.password, 10, false)
             },
+            update: {
+                userSnowflake: clientId,
+                device_auth_token: inputData.authToken,
+                password: await bcrypt.hash(inputData.password, 10, false)
+            }
         })
 
-        const token = await new SignJWT({
-            id: clientId,
-        }).setProtectedHeader({alg: "HS256"})
-            .setIssuedAt()
-            .setExpirationTime("24h")
-            .sign(getJwtSecretKey())
+        await sendEmail(inputData.emailAddress);
 
-        return NextResponse.json({token: token}, {status: 200});
+        return NextResponse.json({status: "Please check your email to continue sign up process."}, {status: 200});
     }
 
     return NextResponse.json({message: 'Missing body'}, {status: 422})

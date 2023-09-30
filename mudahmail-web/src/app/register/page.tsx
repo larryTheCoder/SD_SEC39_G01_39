@@ -35,6 +35,10 @@ export default function Home() {
         formOutput?: React.JSX.Element
     }>()
 
+    const [result, setResult] = useState<{
+        formOutput?: React.JSX.Element
+    }>()
+
     const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -43,9 +47,12 @@ export default function Home() {
         try {
             const response = await axios.post("/api/register", registrationData)
 
+            setResult({formOutput: (<p className="text-gray-500"><Success/>{response.data.status}</p>)})
         } catch (e) {
-            if (axios.isAxiosError(e)) {
-
+            if (axios.isAxiosError(e) && e.response !== undefined) {
+                setResult({formOutput: (<p className="text-red-500"><Failed/>{e.response.data.message}</p>)})
+            } else {
+                setResult({formOutput: (<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)})
             }
         }
 
@@ -159,6 +166,10 @@ export default function Home() {
                 </div>
 
                 <SubmissionButton title="Create account" currentState={animation.registerAttempt} isDisabled={animation.unverified}/>
+                <div className="mt-2 text-sm">
+                    {result?.formOutput === undefined || (result.formOutput)}
+                </div>
+
                 <SignIn/>
             </form>
         </CardMenu>

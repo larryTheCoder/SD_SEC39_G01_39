@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import {prisma} from "@/libs/database";
 import {SignJWT} from "jose";
 import {getJwtSecretKey} from "@/libs/auth";
+import {getDeploymentUrl} from "@/libs/util";
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -47,7 +48,7 @@ export async function sendEmail(email: string) {
         update: {lastSent: new Date().toISOString()}
     })
 
-    const real_token = "https://mudahmail.vercel.app/email-verification?token=" + login_token;
+    const real_token = getDeploymentUrl() + "/verify/" + login_token;
     const result = await transporter.sendMail({
         from: process.env.GMAIL_USER,
         to: email,
@@ -150,7 +151,7 @@ export async function sendEmail(email: string) {
             "            <table role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; width: 100%;'>\n" +
             "              <tr>\n" +
             "                <td class='align-center' width='100%' style='font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;' valign='top' align='center'>\n" +
-            "                  <a href='https://mudahmail.vercel.app' style='color: #ec0867; text-decoration: underline;'><img src='https://cdn.discordapp.com/attachments/512987829970665482/1157674014593011833/Untitled-_1_.png' height='100' alt='MudahMail' style='border: none; -ms-interpolation-mode: bicubic; max-width: 100%;'></a>\n" +
+            "                  <a href='" + getDeploymentUrl() + "' style='color: #ec0867; text-decoration: underline;'><img src='https://cdn.discordapp.com/attachments/512987829970665482/1157674014593011833/Untitled-_1_.png' height='100' alt='MudahMail' style='border: none; -ms-interpolation-mode: bicubic; max-width: 100%;'></a>\n" +
             "                </td>\n" +
             "              </tr>\n" +
             "            </table>\n" +
