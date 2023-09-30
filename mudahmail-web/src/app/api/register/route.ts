@@ -61,7 +61,6 @@ export async function POST(
 export async function HEAD(
     request: Request
 ) {
-    sendEmail("amirmuazzam24@gmail.com")
     const tokenKey = request.headers.get("Application-Token");
 
     let status: number = 404;
