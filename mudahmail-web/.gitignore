@@ -5,6 +5,9 @@
 /.pnp
 .pnp.js
 
+# meh files
+.idea/*
+
 # testing
 /coverage
 
@@ -29,6 +32,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# environmental variable.
+.env
 
 # typescript
 *.tsbuildinfo

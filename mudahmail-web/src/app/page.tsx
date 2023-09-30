@@ -3,30 +3,50 @@
 import React, {useState} from "react";
 import {CardMenu} from '@/app/components/card';
 import {SignUp} from "@/app/components/tooltips";
-import {Failed} from "@/app/components/failed";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
+import axios from "axios";
+import {Failed} from "@/app/components/failed";
 
 export default function Home() {
     const [loginState, setLoginState] = useState(false)
+    const [loginFailed, setLoginFailed] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
         password: "",
         remember: false
     })
 
-    const onSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
-        console.log("Email: " + formData.email)
-        console.log("Password: " + formData.password)
-        console.log("Remember: " + formData.remember)
+    const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
 
         setLoginState(true)
+
+        try {
+            const response = await axios.post("/api/login", formData)
+
+            console.log(response)
+
+            if (response.status === 404) {
+
+            }
+        } catch (error) {
+            setLoginFailed(true)
+        }
+
+        setLoginState(false)
     }
 
     return (
         <CardMenu title="Sign in to your account">
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
-                <EmailTextBox onChange={(e) => setFormData({...formData, email: e})} isDisabled={false}/>
-                <PasswordInputBox onChange={(e) => setFormData({...formData, password: e})} pattern=".{8,}" showTooltip={true} isDisabled={false} inputName="password" titleName="Password"/>
+                <EmailTextBox onChange={(e) => {
+                    setFormData({...formData, email: e})
+                    setLoginFailed(false)
+                }} isDisabled={false}/>
+                <PasswordInputBox onChange={(e) => {
+                    setFormData({...formData, password: e})
+                    setLoginFailed(false)
+                }} pattern=".{8,}" showTooltip={true} isDisabled={false} inputName="password" titleName="Password" showInvalidLogin={loginFailed}/>
 
                 {/* Remember me and Forgot password button */}
 

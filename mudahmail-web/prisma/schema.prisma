@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ApiSession {
+  id             String   @id
+  email          String
+  creationTime   DateTime @map("creation_time")
+  expirationTime DateTime @default(now()) @map("expiration_time")
+
+  @@map("api_sessions")
+}
+
+model UserData {
+  email             String             @id @unique
+  userSnowflake     String             @unique @map("user_snowflake")
+  password          String             @db.VarChar(255)
+  isAdmin           Boolean            @default(false) @map("is_admin")
+  isVerified        Boolean            @default(false) @map("is_verified")
+  device_auth_token String?            @unique @db.VarChar(255)
+  mailbox           Mailbox?           @relation(fields: [device_auth_token], references: [auth_token])
+  verification      UserVerification[]
+
+  @@index([device_auth_token])
+  @@map("user_data")
+}
+
+model UserVerification {
+  user_email String    @id
+  lastSent   DateTime  @default(now()) @map("last_sent")
+  user       UserData? @relation(fields: [user_email], references: [email])
+
+  @@map("user_verification")
+}
+
+model BiometricData {
+  biometric_id      BigInt   @id @default(autoincrement())
+  image             Bytes?   @db.MediumBlob
+  device_auth_token String?  @db.VarChar(255)
+  mailbox           Mailbox? @relation(fields: [device_auth_token], references: [auth_token], onDelete: Restrict, onUpdate: Restrict, map: "FKemlwy4ep1cj08su6p5ptyr419")
+
+  @@index([device_auth_token], map: "FKemlwy4ep1cj08su6p5ptyr419")
+  @@map("biometric_auth")
+}
+
+model EventData {
+  event_id          BigInt            @id @default(autoincrement())
+  event_type        events_event_type
+  json_data         String?           @db.VarChar(255)
+  timestamp         BigInt
+  device_auth_token String?           @db.VarChar(255)
+  mailbox           Mailbox?          @relation(fields: [device_auth_token], references: [auth_token], onDelete: Restrict, onUpdate: Restrict, map: "FKk7u10ln07tnf7wgttphrxrf24")
+
+  @@index([device_auth_token], map: "FKk7u10ln07tnf7wgttphrxrf24")
+  @@map("events")
+}
+
+model Mailbox {
+  auth_token     String          @id @db.VarChar(255)
+  biometric_auth BiometricData[]
+  events         EventData[]
+  UserData       UserData[]
+
+  @@map("mailbox")
+}
+
+enum events_event_type {
+  DOOR_STATE
+  WEIGHT_STATE
+  MOVEMENT_DETECTION
+}
