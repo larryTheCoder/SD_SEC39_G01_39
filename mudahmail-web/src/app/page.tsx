@@ -5,7 +5,6 @@ import {CardMenu} from '@/app/components/card';
 import {SignUp} from "@/app/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
 import {signIn} from "next-auth/react";
-import {getDeploymentUrl} from "@/libs/util";
 
 export default function Home() {
     const [loginState, setLoginState] = useState(false)
@@ -30,7 +29,7 @@ export default function Home() {
         if (result === undefined || result.error !== null) {
             setLoginFailed(true)
         } else {
-            window.location.href = getDeploymentUrl() + "/dashboard"
+            window.location.href = "/dashboard"
             return
         }
 
