@@ -7,7 +7,7 @@ import {Loading} from "@/app/components/loading";
 import {CardMenu} from "@/app/components/card";
 import {SignIn} from "@/app/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
-import axios, {Axios} from "axios";
+import axios from "axios";
 
 export default function Home() {
     const [animation, setAnimation] = useState({

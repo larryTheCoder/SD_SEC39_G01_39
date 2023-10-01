@@ -1,8 +1,6 @@
 import {bcrypt, prisma} from "@/libs/database"
 import {NextResponse} from "next/server";
 import {Snowflake} from "@theinternetfolks/snowflake";
-import {SignJWT} from "jose";
-import {getJwtSecretKey} from "@/libs/auth";
 import {sendEmail} from "@/libs/verification";
 
 export async function POST(

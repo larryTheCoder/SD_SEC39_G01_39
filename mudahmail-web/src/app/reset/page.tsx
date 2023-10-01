@@ -2,7 +2,6 @@
 
 import React, {useState} from "react";
 import {CardMenu} from "@/app/components/card";
-import {Failed} from "@/app/components/failed";
 import {ArrowSmallLeft} from "@/app/icons/arrow";
 import {EmailTextBox} from "@/app/components/input";
 
@@ -26,7 +25,7 @@ export default function Home() {
     return (
         <CardMenu title="Reset password">
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler}>
-                <EmailTextBox onChange={(e) => setEmail(e) } isDisabled={false}/>
+                <EmailTextBox onChange={(e) => setEmail(e)} isDisabled={false}/>
 
                 <button type="submit" className="w-full text-white bg-primary-600 group-invalid:pointer-events-none group-invalid:opacity-30 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                     Request password reset

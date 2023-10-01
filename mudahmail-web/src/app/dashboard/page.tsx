@@ -4,6 +4,10 @@ import React from "react";
 
 export default function Home() {
     return (
-        <p>Hello world!</p>
+        <section>
+            <div>
+                <p>Hello world!</p>
+            </div>
+        </section>
     )
 }

@@ -37,7 +37,7 @@ export function PasswordInputBox({onChange, titleName, pattern, showTooltip, inp
     showTooltip: boolean
     isDisabled: boolean
     showInvalidLogin?: boolean
-}){
+}) {
     return (
         <section>
             <label htmlFor={inputName} className="block mb-2 text-sm font-medium text-gray-900">{titleName}</label>
@@ -45,7 +45,8 @@ export function PasswordInputBox({onChange, titleName, pattern, showTooltip, inp
                    onChange={e => {
                        onChange(e.target.value);
                    }}
-                   className="bg-gray-50 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"                   required={true}
+                   className="bg-gray-50 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
+                   required={true}
                    disabled={isDisabled}
                    pattern={pattern}
             />
@@ -73,10 +74,11 @@ export function SubmissionButton({title, currentState, isDisabled}: {
     title: string
     currentState: boolean
     isDisabled?: boolean
-}){
+}) {
     return (
-        <button type="submit" className="w-full text-white bg-primary-600 disabled:opacity-30 disabled:pointer-events-none group-invalid:pointer-events-none group-invalid:opacity-30 hover:bg-primary-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center" disabled={isDisabled}>
-            {(currentState && <Loading/>) || <a>{title}</a> }
+        <button type="submit" className="w-full text-white bg-primary-600 disabled:opacity-30 disabled:pointer-events-none group-invalid:pointer-events-none group-invalid:opacity-30 hover:bg-primary-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                disabled={isDisabled}>
+            {(currentState && <Loading/>) || <a>{title}</a>}
         </button>
     )
 }

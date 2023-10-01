@@ -4,8 +4,8 @@ import React, {useState} from "react";
 import {CardMenu} from '@/app/components/card';
 import {SignUp} from "@/app/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
-import axios from "axios";
-import {Failed} from "@/app/components/failed";
+import {signIn} from "next-auth/react";
+import {getDeploymentUrl} from "@/libs/util";
 
 export default function Home() {
     const [loginState, setLoginState] = useState(false)
@@ -21,16 +21,17 @@ export default function Home() {
 
         setLoginState(true)
 
-        try {
-            const response = await axios.post("/api/login", formData)
+        const result = await signIn("credentials", {
+            email: formData.email,
+            password: formData.password,
+            redirect: false
+        });
 
-            console.log(response)
-
-            if (response.status === 404) {
-
-            }
-        } catch (error) {
+        if (result === undefined || result.error !== null) {
             setLoginFailed(true)
+        } else {
+            window.location.href = getDeploymentUrl() + "/dashboard"
+            return
         }
 
         setLoginState(false)
