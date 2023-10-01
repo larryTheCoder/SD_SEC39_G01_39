@@ -1,7 +1,7 @@
 import {bcrypt, prisma} from "@/libs/database"
 import {NextResponse} from "next/server";
 import {Snowflake} from "@theinternetfolks/snowflake";
-import {sendEmail} from "@/libs/verification";
+import {sendVerificationMail} from "@/libs/mailing";
 
 export async function POST(
     request: Request
@@ -51,7 +51,7 @@ export async function POST(
             }
         })
 
-        await sendEmail(inputData.emailAddress);
+        await sendVerificationMail(inputData.emailAddress);
 
         return NextResponse.json({status: "Please check your email to continue sign up process."}, {status: 200});
     }

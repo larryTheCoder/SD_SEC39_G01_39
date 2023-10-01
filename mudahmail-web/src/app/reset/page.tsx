@@ -1,35 +1,59 @@
-"use client";
+"use client"
 
-import React, {useState} from "react";
-import {CardMenu} from "@/app/components/card";
-import {ArrowSmallLeft} from "@/app/icons/arrow";
-import {EmailTextBox} from "@/app/components/input";
+import React, {useState} from "react"
+import {CardMenu} from "@/app/components/card"
+import {ArrowSmallLeft} from "@/app/icons/arrow"
+import {EmailTextBox, SubmissionButton} from "@/app/components/input"
+import axios from "axios"
+import {Failed} from "@/app/components/failed"
+import {Success} from "@/app/components/success"
 
 export default function Home() {
-    const [emailHandler, setEmail] = useState("")
+    const [pending, setPending] = useState(false)
+    const [email, setEmail] = useState("")
+    const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
 
-    const onSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
 
-        console.log("Email:" + emailHandler)
-    }
+        setPending(true)
 
-    const handleInputChange = (setFunction: React.Dispatch<React.SetStateAction<any>>, event: React.ChangeEvent<HTMLInputElement>) => {
-        setFunction(event.target.value)
+        try {
+            await axios.post("/api/reset", email)
 
-        const errMsg = document.getElementById("errorMessage")
+            setOutput(<span><Success/>Successfully sent a password reset request to the email.</span>)
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response !== undefined) {
+                let response: {
+                    message: string
+                } = error.response.data
 
-        errMsg?.setAttribute('hidden', 'true');
+                if (response.message !== undefined) {
+                    setOutput(<span><Failed/>{response.message}</span>)
+                } else if (error.response.status === 429) {
+                    setOutput(<span><Failed/>You have sent too many requests, please wait a few minutes to continue.</span>)
+                } else {
+                    setOutput(<span><Failed/>Backend returned error code {error.response.status}</span>)
+                }
+            } else {
+                setOutput(<span><Failed/>Something went wrong on the backend.</span>)
+            }
+        }
+
+        setPending(false)
     }
 
     return (
         <CardMenu title="Reset password">
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler}>
-                <EmailTextBox onChange={(e) => setEmail(e)} isDisabled={false}/>
+                <EmailTextBox onChange={(e) => {
+                    setEmail(e)
+                    setOutput(undefined)
+                }} isDisabled={false}/>
 
-                <button type="submit" className="w-full text-white bg-primary-600 group-invalid:pointer-events-none group-invalid:opacity-30 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    Request password reset
-                </button>
+                <SubmissionButton title="Request password reset" currentState={pending}/>
+
+                {(output != undefined && (<div className="text-sm text-gray-500 peer-[&:invalid]:hidden">{output}</div>))}
 
                 <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
                     <a href="/" className="text-sm font-medium text-primary-600 hover:underline"><ArrowSmallLeft className="mr-2 inline"/>Return back</a>

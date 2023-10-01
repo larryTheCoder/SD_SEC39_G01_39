@@ -7,13 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model ApiSession {
-  id             String   @id
-  email          String
-  creationTime   DateTime @map("creation_time")
-  expirationTime DateTime @default(now()) @map("expiration_time")
+model PasswordReset {
+  userEmail  String    @id @unique @map("user_email")
+  resetToken String    @db.VarChar(1024)
+  validUntil DateTime  @map("valid_until")
+  user       UserData? @relation(fields: [userEmail], references: [email])
 
-  @@map("api_sessions")
+  @@map("password_reset")
 }
 
 model UserData {
@@ -25,6 +25,7 @@ model UserData {
   device_auth_token String?            @unique @db.VarChar(255)
   mailbox           Mailbox?           @relation(fields: [device_auth_token], references: [auth_token])
   verification      UserVerification[]
+  passwordReset     PasswordReset[]
 
   @@index([device_auth_token])
   @@map("user_data")

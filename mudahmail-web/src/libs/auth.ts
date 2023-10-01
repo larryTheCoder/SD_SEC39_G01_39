@@ -8,6 +8,14 @@ export function getJwtSecretKey() {
     return new TextEncoder().encode(secret);
 }
 
+export function getSHA256SecretKey() {
+    const secret = process.env.SHA256_SECRET;
+    if (!secret) {
+        throw new Error("JWT Secret key is not matched");
+    }
+    return new TextEncoder().encode(secret);
+}
+
 export async function verifyJwtToken(token: string) {
     try {
         const {payload} = await jwtVerify(token, getJwtSecretKey());

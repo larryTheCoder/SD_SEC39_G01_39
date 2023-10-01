@@ -13,8 +13,6 @@ export default withAuth(
         const isApiPage = req.nextUrl.pathname.startsWith("/api");
 
         if (isAuthPage) {
-            console.log("is auth page")
-            console.log(isAuth)
             // I am in "login" page now  I check if the user is authenticated or not
             if (isAuth) {
                 // If I get here it means user is on "login" page, and it is authenticated. then redirect it to whatever url

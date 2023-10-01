@@ -60,7 +60,6 @@ export default function Home() {
     }
 
     const validatePassword = (password: string) => {
-        console.log(registrationData.confirmPassword)
         setMinimumLength({
             length: (/.{8,}/).test(password),
             hasUppercase: (/(?=.*?[A-Z])/).test(password),
