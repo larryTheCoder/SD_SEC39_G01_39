@@ -1,9 +1,7 @@
-import {NextApiRequest, NextApiResponse} from "next";
-import {NextResponse} from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 
 export async function GET(
-    request: NextApiRequest,
-    response: NextApiResponse
+    request: NextRequest
 ) {
     return NextResponse.redirect("http://localhost:3000/default-profile.png");
 }
