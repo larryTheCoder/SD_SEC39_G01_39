@@ -2,9 +2,10 @@ import {Failed} from "@/app/components/failed";
 import React from "react";
 import {Loading} from "@/app/components/loading";
 
-export function EmailTextBox({onChange, isDisabled}: {
+export function EmailTextBox({onChange, isDisabled, emailContent}: {
     onChange: (value: string) => void
-    isDisabled: boolean
+    isDisabled?: boolean
+    emailContent?: string
 }) {
     return (
         <section>
@@ -19,6 +20,7 @@ export function EmailTextBox({onChange, isDisabled}: {
                    placeholder="username@gmail.com"
                    required={true}
                    disabled={isDisabled ?? false}
+                   value={emailContent}
                    pattern=".[A-Za-z0-9._%+\-]{1,16}.[@]{1}.[a-z0-9.\-]{1,16}.[.]{1}.[a-z]{1,}"
             />
             <span className="mt-2 hidden text-sm text-red-500 peer-[&:not(:placeholder-shown):not(:focus):invalid]:block">
@@ -35,7 +37,7 @@ export function PasswordInputBox({onChange, titleName, pattern, showTooltip, inp
     pattern: string
     inputName: string
     showTooltip: boolean
-    isDisabled: boolean
+    isDisabled?: boolean
     showInvalidLogin?: boolean
 }) {
     return (

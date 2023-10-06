@@ -5,7 +5,7 @@ import {bcrypt, prisma} from "@/libs/database";
 const emailRegex = (/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i)
 const passwordRegex = (/.{8,}/)
 
-const handling = NextAuth({
+export const handling = NextAuth({
     providers: [
         CredentialsProvider({
             name: "Credentials",
