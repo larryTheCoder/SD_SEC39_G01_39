@@ -14,7 +14,7 @@ export async function POST(
         email: "",
         oldPassword: "",
         newPassword: "",
-    } = await request.json()
+    } = JSON.parse(request.body)
 
     if (!(/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i).test(inputData.email) || !(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/).test(inputData.newPassword)) {
         return NextResponse.json({message: 'Invalid Request Payload'}, {status: 400})
@@ -31,13 +31,13 @@ export async function POST(
         return NextResponse.json({message: 'Invalid Request Payload 1'}, {status: 404})
     }
 
-    const email = user.email
-    if (email === null) {
-        return NextResponse.json({message: 'Invalid Request Payload 2'}, {status: 404})
-    }
+    // const email = user.email
+    // if (email === null) {
+    //     return NextResponse.json({message: 'Invalid Request Payload 2'}, {status: 404})
+    // }
 
     let userData = await prisma.userData.findFirst({
-        where: {AND: [{email: email}]},
+        where: {AND: [{email: "deeez@gmail.com"}]},
         select: {email: true, isVerified: true}
     })
 
