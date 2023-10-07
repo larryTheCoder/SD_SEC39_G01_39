@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import {config} from './options'
 
-export const handling = NextAuth(config)
+// @ts-ignore
+export const handling: never  = NextAuth(config)
 
 export {handling as GET, handling as POST}
