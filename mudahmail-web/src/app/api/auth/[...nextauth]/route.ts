@@ -1,6 +1,9 @@
-import NextAuth from "next-auth"
+import NextAuth, {Session} from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials";
 import {bcrypt, prisma} from "@/libs/database";
+import {Role} from "@/interface";
+import {JWT} from "next-auth/jwt";
+import {AdapterUser} from "next-auth/adapters";
 
 const emailRegex = (/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i)
 const passwordRegex = (/.{8,}/)
@@ -24,11 +27,11 @@ export const handling = NextAuth({
 
                 let userData = await prisma.userData.findFirst({
                     where: {AND: [{email: credentials.email}]},
-                    select: {password: true, userSnowflake: true, email: true}
+                    select: {password: true, userSnowflake: true, email: true, isAdmin: true}
                 });
 
                 if (userData !== null && await bcrypt.compare(credentials.password, userData.password, false)) {
-                    return {email: userData.email, id: userData.userSnowflake}
+                    return {email: userData.email, id: userData.userSnowflake, role: userData.isAdmin ? Role.admin : Role.user}
                 }
 
                 return null;
@@ -37,6 +40,55 @@ export const handling = NextAuth({
     ],
     pages: {
         signIn: "/",
+    },
+    session: {
+        strategy: "jwt",
+        maxAge: 24 * 60 * 60
+    },
+    callbacks: {
+        async jwt({token, user}) {
+            if (user) {
+                if (token.email) {
+                    const userData = await prisma.userData.findFirst({
+                        where: {email: token.email}
+                    })
+
+                    if (userData !== null) {
+                        token.role = userData.isAdmin ? Role.admin : Role.user;
+                    } else {
+                        token.role = user.role;
+                    }
+                }
+
+                token.id = user.id;
+            }
+            return token;
+        },
+        async session({session: session, token, user}: {
+            session: Session,
+            token: JWT,
+            user: AdapterUser
+        }) {
+            if (session.user) {
+                // HAHAHAHAHA I AM TIRED OF THIS ALREADY LMAOOO
+                if (token.email) {
+                    const userData = await prisma.userData.findFirst({
+                        where: {email: token.email}
+                    })
+
+                    if (userData !== null) {
+                        token.role = userData.isAdmin ? Role.admin : Role.user;
+                    } else {
+                        token.role = user.role;
+                    }
+                }
+
+                session.user.role = token.role;
+                session.user.id = token.id;
+            }
+
+            return session;
+        }
     }
 })
 
