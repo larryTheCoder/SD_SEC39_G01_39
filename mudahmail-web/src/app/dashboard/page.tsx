@@ -3,11 +3,17 @@
 import 'flowbite';
 import {signIn, signOut, useSession} from "next-auth/react";
 import React, {ChangeEvent, useState} from "react";
-import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
-import {Success} from "@/app/components/success";
-import {Failed} from "@/app/components/failed";
+import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
+import {Success} from "@/components/success";
+import {Failed} from "@/components/failed";
 import {Session} from "next-auth";
 import {Role} from "@/interface";
+import axios from "axios";
+import {getDeploymentUrl} from "@/libs/util";
+
+const delay = (ms: number) => new Promise(
+    resolve => setTimeout(resolve, ms)
+);
 
 export default function Home() {
     const [dashboard, setDashboard] = useState("dashboard")
@@ -18,16 +24,20 @@ export default function Home() {
         <>
             <header className="bg-white fixed top-0 w-full shadow-md border-gray-200 px-4 lg:px-6 py-2.5">
                 <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
-                    <a href="https://flowbite.com" className="flex items-center">
-                        <img src="/mudahmail.svg" className="mr-3 h-9" alt="Flowbite Logo"/>
-                        <span className="self-center text-xl font-semibold whitespace-nowrap">Mudahmail</span>
+                    <a href={getDeploymentUrl()} className="flex items-center">
+                        <img src="/mudahmail.svg" className="mr-3 h-9" alt="MudahMail Logo"/>
+                        <span className="self-center text-xl font-semibold whitespace-nowrap">MudahMail</span>
                     </a>
                     <div className="flex items-center lg:order-2">
                         <LoginButton session={session}/>
                         <button data-collapse-toggle="mobile-menu-2" type="button" className="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200" aria-controls="mobile-menu-2" aria-expanded="false">
                             <span className="sr-only">Open main menu</span>
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12 a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"></path></svg>
-                            <svg className="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12 a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"></path>
+                            </svg>
+                            <svg className="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                            </svg>
                         </button>
                     </div>
                     <div className="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
@@ -61,7 +71,7 @@ function LoginButton({session}: {
         <div className="ml-auto flex gap-2">
             {session?.user ? (
                 <>
-                    <img src="http://localhost:3000/api/profile-icon" className="mr-3 h-9 rounded-full object-cover"/>
+                    <img src="/api/profile-icon" className="mr-3 h-9 rounded-full object-cover"/>
                     <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 focus:outline-none" onClick={() => signOut()}>
                         Sign Out
                     </button>
@@ -108,14 +118,17 @@ function EditProfileClient({session}: {
 function EditProfile({emailName}: {
     emailName: string | null | undefined;
 }) {
+    const [animation, setAnimation] = useState(false)
+    const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
+
     const [postBody, setPostBody] = useState({
-        email: "",
+        email: emailName,
         oldPassword: "",
-        password: ""
+        newPassword: ""
     })
 
     const [validation, setValidation] = useState({
-        email: "",
+        email: emailName,
         password: "",
         confirmPassword: ""
     })
@@ -157,6 +170,39 @@ function EditProfile({emailName}: {
         })
     }
 
+    const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        setAnimation(true)
+
+        try {
+            const resultFetch = await axios.post("/api/update", postBody);
+
+            if (resultFetch.status === 200) {
+                setOutput(<p><Success/>Successfully updated your account credentials.</p>)
+                setAnimation(false)
+
+                await delay(5 * 1000)
+
+                location.reload()
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+
+                if (status === 409) {
+                    setOutput(<p className="text-red-500"><Failed/>That email is currently being used by another user.</p>)
+                } else if (status == 403) {
+                    setOutput(<p className="text-red-500"><Failed/>Your current password does not match.</p>)
+                } else {
+                    setOutput(<p className="text-red-500"><Failed/>Something went wrong in the backend.</p>)
+                }
+            }
+        }
+
+        setAnimation(false)
+    }
+
     return (
         <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto">
             <div className="w-full bg-white rounded-lg shadow md:mt-0 sm:max-w-md xl:p-0">
@@ -188,29 +234,44 @@ function EditProfile({emailName}: {
                         </label>
                     </div>
 
-                    <EmailTextBox onChange={e => setPostBody({...postBody, email: e})} emailContent={emailName ?? ""}/>
+                    <form className="space-y-2 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
+                        <EmailTextBox onChange={e => setPostBody({...postBody, email: e})} emailContent={postBody.email ?? ""}/>
 
-                    <PasswordInputBox onChange={(password) => {
-                    }} titleName="Current Password" inputName="password-old" pattern=".{8,}" showTooltip={false}/>
+                        <PasswordInputBox onChange={(password) => {
+                            setPostBody({...postBody, oldPassword: password})
+                        }} titleName="Current Password" inputName="password-old" pattern=".{8,}" showTooltip={false}/>
+                        <PasswordInputBox onChange={(password) => {
+                            setPostBody({...postBody, newPassword: password})
+                            setValidation({...validation, password: password})
+                            validatePassword(password)
+                        }} titleName="New Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
+                        <PasswordInputBox onChange={(password) => {
+                            setValidation({...validation, confirmPassword: password})
+                            setMinimumLength({...validate, isMatched: password === validation.password})
+                        }} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
 
-                    <PasswordInputBox onChange={(password) => {
-                        setValidation({...validation, password: password})
-                        validatePassword(password)
-                    }} titleName="New Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
-                    <PasswordInputBox onChange={(password) => {
-                        setValidation({...validation, confirmPassword: password})
-                        setMinimumLength({...validate, isMatched: password === validation.password})
-                    }} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
-
-                    <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
-                        <p>{(validate.length && <Success/>) || (<Failed/>)}Minimum 8 characters long</p>
-                        <p>{(validate.hasUppercase && <Success/>) || (<Failed/>)}At least one uppercase English letter</p>
-                        <p>{(validate.hasLowercase && <Success/>) || (<Failed/>)}At least one lowercase English letter</p>
-                        <p>{(validate.hasDigit && <Success/>) || (<Failed/>)}At least one digit</p>
-                        <p>{(validate.hasSpecial && <Success/>) || (<Failed/>)}At least one special character (#?!@$%^&*)</p>
-                        <p>{(validate.isMatched && <Success/>) || (<Failed/>)}Password must match</p>
-                    </div>
-                    <SubmissionButton title="Save changes" currentState={false}/>
+                        <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
+                            <p>{(validate.length && <Success/>) || (<Failed/>)}Minimum 8 characters long</p>
+                            <p>{(validate.hasUppercase && <Success/>) || (<Failed/>)}At least one uppercase English letter</p>
+                            <p>{(validate.hasLowercase && <Success/>) || (<Failed/>)}At least one lowercase English letter</p>
+                            <p>{(validate.hasDigit && <Success/>) || (<Failed/>)}At least one digit</p>
+                            <p>{(validate.hasSpecial && <Success/>) || (<Failed/>)}At least one special character (#?!@$%^&*)</p>
+                            <p>{(validate.isMatched && <Success/>) || (<Failed/>)}Password must match</p>
+                        </div>
+                        <SubmissionButton title="Save changes" currentState={animation} isDisabled={
+                            !(
+                                validate.length &&
+                                validate.hasUppercase &&
+                                validate.hasLowercase &&
+                                validate.hasDigit &&
+                                validate.hasSpecial &&
+                                validate.isMatched
+                            )
+                        }/>
+                        <div className="mt-2 text-sm">
+                            {output !== undefined ? output : <></>}
+                        </div>
+                    </form>
                 </div>
 
             </div>

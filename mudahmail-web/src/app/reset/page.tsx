@@ -1,12 +1,12 @@
 "use client"
 
 import React, {useState} from "react"
-import {CardMenu} from "@/app/components/card"
-import {ArrowSmallLeft} from "@/app/icons/arrow"
-import {EmailTextBox, SubmissionButton} from "@/app/components/input"
+import {CardMenu} from "@/components/card"
+import {ArrowSmallLeft} from "@/components/arrow"
+import {EmailTextBox, SubmissionButton} from "@/components/input"
 import axios from "axios"
-import {Failed} from "@/app/components/failed"
-import {Success} from "@/app/components/success"
+import {Failed} from "@/components/failed"
+import {Success} from "@/components/success"
 
 export default function Home() {
     const [pending, setPending] = useState(false)

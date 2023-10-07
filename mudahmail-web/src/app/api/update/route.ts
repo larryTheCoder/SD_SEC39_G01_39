@@ -1,13 +1,15 @@
 import {NextRequest, NextResponse} from "next/server"
-import {prisma} from "@/libs/database"
-import {getServerSession} from "next-auth/next"
-import {handling} from "@/app/api/auth/[...nextauth]/route"
-import {Session} from "next-auth";
+import {bcrypt, prisma} from "@/libs/database"
+import {sendVerificationMail} from "@/libs/mailing";
+import {getToken} from "next-auth/jwt";
+
+const emailRegex = /.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i
+const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/
 
 export async function POST(
     request: NextRequest,
 ) {
-    const currentSession: Session | null = await getServerSession(handling)
+    const claims = await getToken({ req: request })
 
     const inputData: {
         email: "",
@@ -15,29 +17,54 @@ export async function POST(
         newPassword: "",
     } = await request.json()
 
-    if (!(/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i).test(inputData.email) || !(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/).test(inputData.newPassword)) {
-        return NextResponse.json({message: 'Invalid Request Payload'}, {status: 400})
+    if (!emailRegex.test(inputData.email) || !passRegex.test(inputData.newPassword)) {
+        return NextResponse.json({message: 'Invalid Request Payload #1'}, {status: 401})
     }
 
-    if (currentSession === null || currentSession === undefined) {
-        return NextResponse.json({message: 'Invalid Request Payload 3'}, {status: 400})
+    if (claims === null) {
+        return NextResponse.json({message: 'Invalid Request Payload #2'}, {status: 401})
     }
 
-    const user = currentSession.user;
+    // Verify the user snowflake id (Technically this should be unique).
 
-    if (user === undefined || user === null) {
-        return NextResponse.json({message: 'Invalid Request Payload 1'}, {status: 404})
-    }
-
-    const email = user.email
-    if (email === null) {
-        return NextResponse.json({message: 'Invalid Request Payload 2'}, {status: 404})
+    const currentEmail = claims.email
+    const snowflakeId = claims.id;
+    if (typeof currentEmail !== "string" || typeof snowflakeId !== "string") {
+        return NextResponse.json({message: 'Invalid Request Payload #3'}, {status: 401})
     }
 
     let userData = await prisma.userData.findFirst({
-        where: {AND: [{email: "deeez@gmail.com"}]},
-        select: {email: true, isVerified: true}
+        where: {userSnowflake: snowflakeId}
     })
 
-    return NextResponse.json({}, {status: 200})
+    if (userData === null) {
+        return NextResponse.json({message: 'Invalid Request Payload #4'}, {status: 401})
+    }
+
+    let currentStatus = 0;
+    if (await bcrypt.compare(inputData.oldPassword, userData.password, false)) {
+        const newEmail = currentEmail.toLowerCase() !== inputData.email.toLowerCase()
+
+        try {
+            await prisma.userData.update({
+                where: {userSnowflake: snowflakeId},
+                data: {
+                    email: newEmail ? inputData.email : currentEmail,
+                    password: await bcrypt.hash(inputData.newPassword, 10, false),
+                }
+            })
+
+            if (newEmail) {
+                currentStatus = 1;
+
+                await sendVerificationMail(inputData.email);
+            }
+        } catch (e) {
+            return NextResponse.json({message: 'The email is currently in use.'}, {status: 409})
+        }
+    } else {
+        return NextResponse.json({message: 'Invalid password'}, {status: 403})
+    }
+
+    return NextResponse.json({response: currentStatus}, {status: 200})
 }

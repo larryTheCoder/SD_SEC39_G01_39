@@ -1,9 +1,9 @@
 "use client";
 
 import React, {useState} from "react";
-import {CardMenu} from '@/app/components/card';
-import {SignUp} from "@/app/components/tooltips";
-import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
+import {CardMenu} from '@/components/card';
+import {SignUp} from "@/components/tooltips";
+import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import {signIn} from "next-auth/react";
 
 export default function Home() {

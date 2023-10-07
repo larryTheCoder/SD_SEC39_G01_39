@@ -23,6 +23,7 @@ model UserData {
   isAdmin           Boolean            @default(false) @map("is_admin")
   isVerified        Boolean            @default(false) @map("is_verified")
   device_auth_token String?            @unique @db.VarChar(255)
+  userPicturePath   String?            @default("") @map("user_picture_path")
   mailbox           Mailbox?           @relation(fields: [device_auth_token], references: [auth_token])
   verification      UserVerification[]
   passwordReset     PasswordReset[]

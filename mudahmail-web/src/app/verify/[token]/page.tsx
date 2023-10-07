@@ -1,12 +1,12 @@
 "use client"
 
 import React, {useState} from "react";
-import {CardMenu} from "@/app/components/card";
+import {CardMenu} from "@/components/card";
 import {useParams} from "next/navigation";
 import axios from "axios";
-import {Loading} from "@/app/components/loading";
-import {Success} from "@/app/components/success";
-import {Failed} from "@/app/components/failed";
+import {Loading} from "@/components/loading";
+import {Success} from "@/components/success";
+import {Failed} from "@/components/failed";
 
 export default function Home() {
     const params = useParams();

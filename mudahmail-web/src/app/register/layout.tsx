@@ -1,25 +1,16 @@
-import './globals.css'
-
 import type {Metadata} from 'next'
 import {Inter} from 'next/font/google'
 import React from "react";
-import {getDeploymentUrl} from "@/libs/util";
-import type {Session} from "next-auth";
+import {Session} from "next-auth";
 import {getServerSession} from "next-auth/next";
-import Provider from "@/components/Provider";
 import {config} from "@/app/api/auth/[...nextauth]/options";
+import Provider from "@/components/Provider";
 
 const inter = Inter({subsets: ['latin']})
 
 export const metadata: Metadata = {
-    title: 'MudahMail | Login',
-    description: 'Login page for MudahMail dashboard',
-    metadataBase: new URL(getDeploymentUrl()),
-    openGraph: {
-        type: "website",
-        title: "MudahMail Login Dashboard",
-        description: "One stop smart mailbox solution"
-    }
+    title: 'MudahMail | Register',
+    description: 'Register page for MudahMail dashboard',
 }
 
 export default async function RootLayout({children}: {

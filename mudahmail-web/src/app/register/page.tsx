@@ -1,12 +1,12 @@
 "use client";
 
 import React, {useState} from "react";
-import {Success} from "@/app/components/success";
-import {Failed} from "@/app/components/failed";
-import {Loading} from "@/app/components/loading";
-import {CardMenu} from "@/app/components/card";
-import {SignIn} from "@/app/components/tooltips";
-import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/app/components/input";
+import {Success} from "@/components/success";
+import {Failed} from "@/components/failed";
+import {Loading} from "@/components/loading";
+import {CardMenu} from "@/components/card";
+import {SignIn} from "@/components/tooltips";
+import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import axios from "axios";
 
 export default function Home() {

@@ -1,6 +1,6 @@
-import {Failed} from "@/app/components/failed";
+import {Failed} from "@/components/failed";
 import React from "react";
-import {Loading} from "@/app/components/loading";
+import {Loading} from "@/components/loading";
 
 export function EmailTextBox({onChange, isDisabled, emailContent}: {
     onChange: (value: string) => void

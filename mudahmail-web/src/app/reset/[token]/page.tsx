@@ -1,14 +1,14 @@
 "use client"
 
 import React, {useState} from "react"
-import {CardMenu} from "@/app/components/card"
-import {ArrowSmallLeft} from "@/app/icons/arrow"
-import {PasswordInputBox, SubmissionButton} from "@/app/components/input"
+import {CardMenu} from "@/components/card"
+import {ArrowSmallLeft} from "@/components/arrow"
+import {PasswordInputBox, SubmissionButton} from "@/components/input"
 import axios from "axios"
-import {Failed} from "@/app/components/failed"
-import {Success} from "@/app/components/success"
+import {Failed} from "@/components/failed"
+import {Success} from "@/components/success"
 import {useParams} from "next/navigation"
-import {Loading} from "@/app/components/loading"
+import {Loading} from "@/components/loading"
 
 const delay = (ms: number) => new Promise(
     resolve => setTimeout(resolve, ms)
