@@ -11,9 +11,24 @@ model PasswordReset {
   userEmail  String    @id @unique @map("user_email")
   resetToken String    @db.VarChar(1024)
   validUntil DateTime  @map("valid_until")
-  user       UserData? @relation(fields: [userEmail], references: [email])
+  user       UserData? @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("password_reset")
+}
+
+model UserInformation {
+  userEmail   String @id @unique @map("user_email")
+  firstName   String @map("first_name")
+  lastName    String @map("last_name")
+  address     String
+  city        String
+  state       String
+  postcode    Int
+  phoneNumber String @map("phone_number")
+
+  user UserData? @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("user_information")
 }
 
 model UserData {
@@ -24,9 +39,10 @@ model UserData {
   isVerified        Boolean            @default(false) @map("is_verified")
   device_auth_token String?            @unique @db.VarChar(255)
   userPicturePath   String?            @default("") @map("user_picture_path")
-  mailbox           Mailbox?           @relation(fields: [device_auth_token], references: [auth_token])
+  mailbox           Mailbox?           @relation(fields: [device_auth_token], references: [auth_token], onDelete: Cascade, onUpdate: Cascade)
   verification      UserVerification[]
   passwordReset     PasswordReset[]
+  userInformation   UserInformation[]
 
   @@index([device_auth_token])
   @@map("user_data")
@@ -35,7 +51,7 @@ model UserData {
 model UserVerification {
   user_email String    @id
   lastSent   DateTime  @default(now()) @map("last_sent")
-  user       UserData? @relation(fields: [user_email], references: [email])
+  user       UserData? @relation(fields: [user_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("user_verification")
 }
@@ -44,7 +60,7 @@ model BiometricData {
   biometric_id      BigInt   @id @default(autoincrement())
   image             Bytes?   @db.MediumBlob
   device_auth_token String?  @db.VarChar(255)
-  mailbox           Mailbox? @relation(fields: [device_auth_token], references: [auth_token], onDelete: Restrict, onUpdate: Restrict, map: "FKemlwy4ep1cj08su6p5ptyr419")
+  mailbox           Mailbox? @relation(fields: [device_auth_token], references: [auth_token], onDelete: Cascade, onUpdate: Cascade, map: "FKemlwy4ep1cj08su6p5ptyr419")
 
   @@index([device_auth_token], map: "FKemlwy4ep1cj08su6p5ptyr419")
   @@map("biometric_auth")
@@ -56,7 +72,7 @@ model EventData {
   json_data         String?           @db.VarChar(255)
   timestamp         BigInt
   device_auth_token String?           @db.VarChar(255)
-  mailbox           Mailbox?          @relation(fields: [device_auth_token], references: [auth_token], onDelete: Restrict, onUpdate: Restrict, map: "FKk7u10ln07tnf7wgttphrxrf24")
+  mailbox           Mailbox?          @relation(fields: [device_auth_token], references: [auth_token], onDelete: Cascade, onUpdate: Cascade, map: "FKk7u10ln07tnf7wgttphrxrf24")
 
   @@index([device_auth_token], map: "FKk7u10ln07tnf7wgttphrxrf24")
   @@map("events")

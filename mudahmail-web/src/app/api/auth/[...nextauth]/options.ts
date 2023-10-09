@@ -86,7 +86,7 @@ async function doesThings(token: JWT) {
 
                 token.picture = await getSignedUrl(s3, command, {expiresIn: 3600});
             } else {
-                token.picture = null;
+                token.picture = "/default-profile.png";
             }
 
             token.email = userData.email;
