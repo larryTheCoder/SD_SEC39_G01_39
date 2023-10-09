@@ -4,9 +4,9 @@ import {NextAuthOptions, Session} from "next-auth";
 import {JWT} from "next-auth/jwt";
 import {AdapterUser} from "next-auth/adapters";
 import {Role} from "@/interface";
-import {GetObjectCommand, HeadObjectCommand} from "@aws-sdk/client-s3";
+import {GetObjectCommand} from "@aws-sdk/client-s3";
 import {s3, S3_BUCKET} from "@/libs/s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 
 const emailRegex = (/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i)
 const passwordRegex = (/.{8,}/)
@@ -66,6 +66,7 @@ export const config: NextAuthOptions = {
                 await doesThings(token);
 
                 session.user.role = token.role;
+                session.user.image = token.picture;
             }
 
             return session;
@@ -80,12 +81,11 @@ async function doesThings(token: JWT) {
         })
 
         if (userData !== null) {
-            try{
-                const result = await s3.send(new HeadObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${userData.userSnowflake}/profile-image` }));
-                const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${userData.userSnowflake}/profile-image` });
+            if (userData.userPicturePath !== null && userData.userPicturePath.length > 0) {
+                const command = new GetObjectCommand({Bucket: S3_BUCKET, Key: userData.userPicturePath});
 
-                token.picture = await getSignedUrl(s3, command, { expiresIn: 3600 });
-            } catch (e) {
+                token.picture = await getSignedUrl(s3, command, {expiresIn: 3600});
+            } else {
                 token.picture = null;
             }
 

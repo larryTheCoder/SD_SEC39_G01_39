@@ -2,14 +2,13 @@
 
 import 'flowbite';
 import {signIn, signOut, useSession} from "next-auth/react";
-import React, {ChangeEvent, useState} from "react";
+import React, {useState} from "react";
 import {Success} from "@/components/success";
 import {Failed} from "@/components/failed";
 import {Session} from "next-auth";
 import {Role} from "@/interface";
 import axios from "axios";
 import {getDeploymentUrl} from "@/libs/util";
-import {PasswordInputBox} from "@/components/input";
 import {ProfileUpdate} from "@/app/dashboard/components/profile-update";
 
 const delay = (ms: number) => new Promise(
@@ -17,10 +16,16 @@ const delay = (ms: number) => new Promise(
 );
 
 export default function Home() {
-    const {data: session} = useSession();
+    const {data: session, update} = useSession();
 
     const [dashboard, setDashboard] = useState("dashboard")
-    const [profilePicture, setProfilePicture] = useState<string>(session?.user?.image ?? "")
+    const [profilePicture, setProfilePicture0] = useState<string>(session?.user?.image ?? "")
+
+    const setProfilePicture = async (e: string) => {
+        setProfilePicture0(e);
+
+        await update({})
+    }
 
     return (
         <>

@@ -83,6 +83,13 @@ export async function PUT(
     const formData = await request.formData();
     const files = formData.getAll("file") as File[];
 
+    await prisma.userData.update({
+        where: {userSnowflake: claims.id},
+        data: {
+            userPicturePath: `profiles/${claims.id}/profile-image`
+        }
+    })
+
     const response = await Promise.all(
         files.map(async (file) => {
             // not sure why I have to override the types here
@@ -102,6 +109,13 @@ export async function DELETE(
     if (claims === null) {
         return NextResponse.json({}, {status: 401})
     }
+
+    await prisma.userData.update({
+        where: {userSnowflake: claims.id},
+        data: {
+            userPicturePath: null
+        }
+    })
 
     return NextResponse.json(await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${claims.id}/profile-image`})))
 }
