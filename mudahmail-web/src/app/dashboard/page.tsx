@@ -3,22 +3,24 @@
 import 'flowbite';
 import {signIn, signOut, useSession} from "next-auth/react";
 import React, {ChangeEvent, useState} from "react";
-import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import {Success} from "@/components/success";
 import {Failed} from "@/components/failed";
 import {Session} from "next-auth";
 import {Role} from "@/interface";
 import axios from "axios";
 import {getDeploymentUrl} from "@/libs/util";
+import {PasswordInputBox} from "@/components/input";
+import {ProfileUpdate} from "@/app/dashboard/components/profile-update";
 
 const delay = (ms: number) => new Promise(
     resolve => setTimeout(resolve, ms)
 );
 
 export default function Home() {
-    const [dashboard, setDashboard] = useState("dashboard")
-
     const {data: session} = useSession();
+
+    const [dashboard, setDashboard] = useState("dashboard")
+    const [profilePicture, setProfilePicture] = useState<string>(session?.user?.image ?? "")
 
     return (
         <>
@@ -29,7 +31,7 @@ export default function Home() {
                         <span className="self-center text-xl font-semibold whitespace-nowrap">MudahMail</span>
                     </a>
                     <div className="flex items-center lg:order-2">
-                        <LoginButton session={session}/>
+                        <LoginButton session={session} profile={profilePicture}/>
                         <button data-collapse-toggle="mobile-menu-2" type="button" className="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200" aria-controls="mobile-menu-2" aria-expanded="false">
                             <span className="sr-only">Open main menu</span>
                             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -43,18 +45,18 @@ export default function Home() {
                     <div className="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
                         <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
                             <NavButtonStyle active={dashboard === "dashboard"} content="Home" setActiveTab={e => setDashboard("dashboard")}/>
-                            <NavButtonStyle active={dashboard === "profile"} content="Edit Profile" setActiveTab={e => setDashboard("profile")}/>
+                            <NavButtonStyle active={dashboard === "profile"} content="Profile" setActiveTab={e => setDashboard("profile")}/>
                             <NavButtonStyle active={dashboard === "admin"} hidden={session?.user?.role !== Role.admin} content="Administrative" setActiveTab={e => setDashboard("admin")}/>
                         </ul>
                     </div>
                 </div>
             </header>
 
-            <div className="mt-16 h-screen">
+            <div className="mt-8 h-screen">
                 {dashboard === "dashboard" ? (
                     <Dashboard/>
                 ) : (dashboard === "profile" ? (
-                    <EditProfileClient session={session}/>
+                    <EditProfileClient session={session} profileUpdate={(e) => setProfilePicture(e)}/>
                 ) : (dashboard === "admin" ? (
                     <AdminControlPanel/>
                 ) : <></>))
@@ -64,14 +66,15 @@ export default function Home() {
     )
 }
 
-function LoginButton({session}: {
+function LoginButton({session, profile}: {
     session: Session | null
+    profile: string | null
 }) {
     return (
         <div className="ml-auto flex gap-2">
             {session?.user ? (
                 <>
-                    <img src="/api/profile-icon" className="mr-3 h-9 rounded-full object-cover"/>
+                    <img src={profile && profile.length > 0 ? profile : "/default-profile.png"} className="mr-3 h-9 rounded-full object-cover"/>
                     <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 focus:outline-none" onClick={() => signOut()}>
                         Sign Out
                     </button>
@@ -101,8 +104,9 @@ function AdminControlPanel() {
     )
 }
 
-function EditProfileClient({session}: {
-    session: Session | null
+function EditProfileClient({session, profileUpdate}: {
+    session: Session | null,
+    profileUpdate: (e: string) => void
 }) {
     if (session === null || session === undefined) {
         return;
@@ -110,13 +114,15 @@ function EditProfileClient({session}: {
 
     return (
         <div>
-            <EditProfile emailName={session.user?.email}/>
+            <EditProfile emailName={session.user?.email} profileImage={session.user?.image ?? null} profileUpdate={profileUpdate}/>
         </div>
     )
 }
 
-function EditProfile({emailName}: {
-    emailName: string | null | undefined;
+function EditProfile({emailName, profileImage, profileUpdate}: {
+    emailName: string | null | undefined
+    profileImage: string | null
+    profileUpdate: (e: string) => void
 }) {
     const [animation, setAnimation] = useState(false)
     const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
@@ -141,23 +147,6 @@ function EditProfile({emailName}: {
         hasSpecial: false,
         isMatched: false
     })
-
-    const [profilePicture, setProfilePicture] = useState<string>("");
-    const handleProfilePictureChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target) {
-                    const dataUrl = event.target.result as string;
-                    setProfilePicture(dataUrl);
-                }
-            };
-
-            reader.readAsDataURL(file);
-        }
-    };
 
     const validatePassword = (password: string) => {
         setMinimumLength({
@@ -204,76 +193,91 @@ function EditProfile({emailName}: {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto">
-            <div className="w-full bg-white rounded-lg shadow md:mt-0 sm:max-w-md xl:p-0">
-                <div className="p-6 space-y-4 md:space-y-4 sm:p-8">
-                    <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl">
-                        Edit profile
-                    </h1>
-
-                    <div className="flex flex-col items-center space-y-2">
-                        <img
-                            src={profilePicture.length <= 0 ? `/default-profile.png` : profilePicture}
-                            alt="Profile Picture"
-                            className="w-32 h-32 rounded-full object-cover"
-                        />
-                    </div>
-
-                    <div className="flex flex-col items-center space-y-2">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            id="profilePicture"
-                            onChange={handleProfilePictureChange}
-                            className="hidden"
-                        />
-                        <label
-                            htmlFor="profilePicture"
-                            className="cursor-pointer text-primary-600 hover:underline">
-                            Set Profile Picture
-                        </label>
-                    </div>
-
-                    <form className="space-y-2 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
-                        <EmailTextBox onChange={e => setPostBody({...postBody, email: e})} emailContent={postBody.email ?? ""}/>
-
-                        <PasswordInputBox onChange={(password) => {
-                            setPostBody({...postBody, oldPassword: password})
-                        }} titleName="Current Password" inputName="password-old" pattern=".{8,}" showTooltip={false}/>
-                        <PasswordInputBox onChange={(password) => {
-                            setPostBody({...postBody, newPassword: password})
-                            setValidation({...validation, password: password})
-                            validatePassword(password)
-                        }} titleName="New Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
-                        <PasswordInputBox onChange={(password) => {
-                            setValidation({...validation, confirmPassword: password})
-                            setMinimumLength({...validate, isMatched: password === validation.password})
-                        }} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" showTooltip={false}/>
-
-                        <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
-                            <p>{(validate.length && <Success/>) || (<Failed/>)}Minimum 8 characters long</p>
-                            <p>{(validate.hasUppercase && <Success/>) || (<Failed/>)}At least one uppercase English letter</p>
-                            <p>{(validate.hasLowercase && <Success/>) || (<Failed/>)}At least one lowercase English letter</p>
-                            <p>{(validate.hasDigit && <Success/>) || (<Failed/>)}At least one digit</p>
-                            <p>{(validate.hasSpecial && <Success/>) || (<Failed/>)}At least one special character (#?!@$%^&*)</p>
-                            <p>{(validate.isMatched && <Success/>) || (<Failed/>)}Password must match</p>
-                        </div>
-                        <SubmissionButton title="Save changes" currentState={animation} isDisabled={
-                            !(
-                                validate.length &&
-                                validate.hasUppercase &&
-                                validate.hasLowercase &&
-                                validate.hasDigit &&
-                                validate.hasSpecial &&
-                                validate.isMatched
-                            )
-                        }/>
-                        <div className="mt-2 text-sm">
-                            {output !== undefined ? output : <></>}
-                        </div>
-                    </form>
+        <div className="justify-between items-center mx-auto max-w-8xl p-8">
+            <div className="grid grid-cols-1 pt-6 xl:grid-cols-3 xl:gap-4 dark:bg-gray-900">
+                <div className="mb-4 col-span-full xl:mb-2">
+                    <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">My Profile</h1>
                 </div>
 
+                {/* Right content */}
+                <div className="col-span-full xl:col-auto">
+                    <div className="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                        <div className="items-center sm:flex xl:block 2xl:flex sm:space-x-4 xl:space-x-0 2xl:space-x-4">
+                            <ProfileUpdate profileImage={profileImage} profileUpdate={profileUpdate}/>
+                        </div>
+                    </div>
+                    <div className="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                        <h3 className="mb-4 text-xl font-semibold dark:text-white">Password information</h3>
+                        <form action="#">
+                            <div className="grid grid-cols-6 gap-6">
+                                <div className="col-span-6 sm:col-span-6">
+                                    <label htmlFor="current-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Current password</label>
+                                    <input type="password" name="current-password" id="current-password" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="••••••••" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-6">
+                                    <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New password</label>
+                                    <input data-popover-target="popover-password" data-popover-placement="bottom" type="password" id="password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="••••••••" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-6">
+                                    <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm password</label>
+                                    <input type="password" name="confirm-password" id="confirm-password" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="••••••••" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-full">
+                                    <button className="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" type="submit">Save all</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div className="col-span-2">
+                    <div className="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                        <h3 className="mb-4 text-xl font-semibold dark:text-white">General information</h3>
+                        <form action="#">
+                            <div className="grid grid-cols-6 gap-6">
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="first-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First Name</label>
+                                    <input type="text" name="first-name" id="first-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Bonnie" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="last-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
+                                    <input type="text" name="last-name" id="last-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Green" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="country" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Country</label>
+                                    <input type="text" name="country" id="country" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="United States" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="city" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">City</label>
+                                    <input type="text" name="city" id="city" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="e.g. San Francisco" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="address" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
+                                    <input type="text" name="address" id="address" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="e.g. California" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+                                    <input type="email" name="email" id="email" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="example@company.com" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="phone-number" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
+                                    <input type="number" name="phone-number" id="phone-number" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="e.g. +(12)3456 789" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-3">
+                                    <label htmlFor="zip-code" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Zip/postal code</label>
+                                    <input type="number" name="zip-code" id="zip-code" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="123456" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-span-6">
+                                    <label htmlFor="zip-code" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Device Identifier</label>
+                                    <input type="text" name="device-id" id="device-id" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="7dae63d0-742f-4b04-8330-5cbd6c68ffe3" required/>
+                                </div>
+                                <div className="col-span-6 sm:col-full">
+                                    <button className="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" type="submit">Save all</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     );

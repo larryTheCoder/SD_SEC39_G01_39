@@ -2,6 +2,8 @@ import {NextRequest, NextResponse} from "next/server"
 import {bcrypt, prisma} from "@/libs/database"
 import {sendVerificationMail} from "@/libs/mailing";
 import {getToken} from "next-auth/jwt";
+import {s3, S3_BUCKET} from "@/libs/s3";
+import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
 
 const emailRegex = /.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i
 const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/
@@ -9,7 +11,7 @@ const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,
 export async function POST(
     request: NextRequest,
 ) {
-    const claims = await getToken({ req: request })
+    const claims = await getToken({req: request})
 
     const inputData: {
         email: "",
@@ -67,4 +69,39 @@ export async function POST(
     }
 
     return NextResponse.json({response: currentStatus}, {status: 200})
+}
+
+export async function PUT(
+    request: NextRequest,
+) {
+    const claims = await getToken({req: request})
+
+    if (claims === null) {
+        return NextResponse.json({}, {status: 401})
+    }
+
+    const formData = await request.formData();
+    const files = formData.getAll("file") as File[];
+
+    const response = await Promise.all(
+        files.map(async (file) => {
+            // not sure why I have to override the types here
+            const Body = (await file.arrayBuffer()) as Buffer;
+            const result = await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${claims.id}/profile-image`, Body, ContentType: file.type}));
+        })
+    );
+
+    return NextResponse.json(response)
+}
+
+export async function DELETE(
+    request: NextRequest,
+) {
+    const claims = await getToken({req: request})
+
+    if (claims === null) {
+        return NextResponse.json({}, {status: 401})
+    }
+
+    return NextResponse.json(await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${claims.id}/profile-image`})))
 }

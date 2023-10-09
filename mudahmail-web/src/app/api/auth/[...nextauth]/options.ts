@@ -4,6 +4,9 @@ import {NextAuthOptions, Session} from "next-auth";
 import {JWT} from "next-auth/jwt";
 import {AdapterUser} from "next-auth/adapters";
 import {Role} from "@/interface";
+import {GetObjectCommand, HeadObjectCommand} from "@aws-sdk/client-s3";
+import {s3, S3_BUCKET} from "@/libs/s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const emailRegex = (/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i)
 const passwordRegex = (/.{8,}/)
@@ -30,7 +33,6 @@ export const config: NextAuthOptions = {
                     select: {password: true, userSnowflake: true, email: true, isAdmin: true}
                 });
 
-                console.log(bcrypt.hash(credentials.password, 10, false))
                 if (userData !== null && await bcrypt.compare(credentials.password, userData.password, false)) {
                     return {email: userData.email, id: userData.userSnowflake, role: userData.isAdmin ? Role.admin : Role.user}
                 }
@@ -78,6 +80,15 @@ async function doesThings(token: JWT) {
         })
 
         if (userData !== null) {
+            try{
+                const result = await s3.send(new HeadObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${userData.userSnowflake}/profile-image` }));
+                const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: `profiles/${userData.userSnowflake}/profile-image` });
+
+                token.picture = await getSignedUrl(s3, command, { expiresIn: 3600 });
+            } catch (e) {
+                token.picture = null;
+            }
+
             token.email = userData.email;
             token.role = userData.isAdmin ? Role.admin : Role.user;
         } else {
