@@ -6,11 +6,22 @@ import {useSession} from "next-auth/react";
 
 export function GeneralInformation() {
     const {data: session} = useSession()
-    const [city, setCity] = useState(getCityByState("Wp Kuala Lumpur"))
-    const [postcode, setPostcode] = useState(getPostcodeByCity("Kuala Lumpur"))
+    const [city, setCity] = useState(getCityByState("Wp Kuala Lumpur", undefined))
+    const [postcode, setPostcode] = useState(getPostcodeByCity("Kuala Lumpur", undefined))
     const [loading, setLoading] = useState(false)
     const [allowed, setAllowed] = useState(true)
     const [result, setResult] = useState(<></>)
+    const [isRunning, setIsRunning] = useState(false);
+    const [defaultValue, setDefaultValue] = useState<{
+        email: string,
+        firstName: string,
+        lastName: string,
+        address: string,
+        city: string,
+        state: string,
+        postcode: string,
+        phoneNumber: string
+    }>()
 
     if (session === null) {
         return (<></>);
@@ -23,9 +34,9 @@ export function GeneralInformation() {
         const id = select.children[select.selectedIndex] as HTMLOptionElement;
 
         if (type === 0) {
-            setCity(getCityByState(id.value))
+            setCity(getCityByState(id.value, defaultValue?.city))
         } else {
-            setPostcode(getPostcodeByCity(id.value))
+            setPostcode(getPostcodeByCity(id.value, defaultValue?.postcode))
         }
     }
 
@@ -56,6 +67,38 @@ export function GeneralInformation() {
         setLoading(false)
     }
 
+    const call = (async () => {
+        if (isRunning) {
+            return;
+        }
+
+        setIsRunning(true)
+        try {
+            const status = await axios.get("/api/profile")
+            const userInformation = status.data;
+
+            setDefaultValue({
+                email: userInformation.email,
+                firstName: userInformation.firstName,
+                lastName: userInformation.lastName,
+                address: userInformation.address,
+                city: userInformation.city,
+                state: userInformation.state,
+                postcode: userInformation.postcode,
+                phoneNumber: userInformation.phoneNumber
+            })
+
+            console.log(userInformation.postcode)
+            setCity(getCityByState(userInformation.state, userInformation.city))
+            setPostcode(getPostcodeByCity(userInformation.city, userInformation.postcode))
+        } catch (e) {
+        }
+    });
+
+    if (!isRunning) {
+        call();
+    }
+
     return (
         <>
             <h3 className="mb-4 text-xl font-semibold">General information</h3>
@@ -63,39 +106,39 @@ export function GeneralInformation() {
                 <div className="grid grid-cols-6 gap-6">
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="first-name" className="block mb-2 text-sm font-medium text-gray-900">First Name</label>
-                        <input type="text" name="first-name" id="first-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Abu" required/>
+                        <input type="text" name="first-name" defaultValue={defaultValue?.firstName} id="first-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Abu" required/>
                     </div>
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="last-name" className="block mb-2 text-sm font-medium text-gray-900">Last Name</label>
-                        <input type="text" name="last-name" id="last-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Bakar" required/>
+                        <input type="text" name="last-name" defaultValue={defaultValue?.lastName} id="last-name" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Bakar" required/>
                     </div>
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="address" className="block mb-2 text-sm font-medium text-gray-900">Address</label>
-                        <input type="text" name="address" id="address" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Kampung Pandan" required/>
+                        <input type="text" name="address" id="address" defaultValue={defaultValue?.address} className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="Kampung Pandan" required/>
                     </div>
 
                     {/* Needs validation -- State/City/Postcode */}
 
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="state" className="block mb-2 text-sm font-medium text-gray-900">State</label>
-                        <select id="state" name="state" className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" onChange={e => onStateChangeEvent(e, 0)}>
+                        <select id="state" name="state" defaultValue={defaultValue?.state} className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" onChange={e => onStateChangeEvent(e, 0)}>
                             {
                                 getStates().map((data) => (
-                                    <option key={data} value={data}>{data}</option>
+                                    <option key={data} value={data} selected={defaultValue?.state == data}>{data}</option>
                                 ))
                             }
                         </select>
                     </div>
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="city" className="block mb-2 text-sm font-medium text-gray-900">City</label>
-                        <select id="city" name="city" className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" onChange={e => onStateChangeEvent(e, 1)}>
+                        <select id="city" name="city" defaultValue={defaultValue?.city} className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" onChange={e => onStateChangeEvent(e, 1)}>
                             {city}
                         </select>
                     </div>
 
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="zip-code" className="block mb-2 text-sm font-medium text-gray-900">Postcode</label>
-                        <select id="zip-code" name="zip-code" className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                        <select id="zip-code" name="zip-code" defaultValue={defaultValue?.postcode} className="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                             {postcode}
                         </select>
                     </div>
@@ -104,7 +147,7 @@ export function GeneralInformation() {
 
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900">Email</label>
-                        <input type="email" name="email" id="email" className="shadow-sm bg-gray-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 peer" placeholder="username@gmail.com" required/>
+                        <input type="email" name="email" id="email" defaultValue={defaultValue?.email} className="shadow-sm bg-gray-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 peer" placeholder="username@gmail.com" required/>
                         <span className="mt-2 hidden text-sm text-red-500 peer-[&:not(:placeholder-shown):not(:focus):invalid]:block">
                             <Failed/>
                             Please enter a valid email address
@@ -112,7 +155,7 @@ export function GeneralInformation() {
                     </div>
                     <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="phone-number" className="block mb-2 text-sm font-medium text-gray-900">Phone Number</label>
-                        <input type="number" name="phone-number" id="phone-number" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="+(60)12 345 6789" required/>
+                        <input type="number" name="phone-number" defaultValue={defaultValue?.phoneNumber} id="phone-number" className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" placeholder="+(60)12 345 6789" required/>
                     </div>
                     <div className="col-span-6 sm:col-full">
                         <button className="inline-flex items-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-30 disabled:pointer-events-none group-invalid:pointer-events-none group-invalid:opacity-30 " type="submit" disabled={!allowed}>
@@ -136,19 +179,19 @@ export function GeneralInformation() {
     )
 }
 
-const getCityByState = (state: string) => {
+const getCityByState = (state: string, defaultCity: string | undefined) => {
     return (
         <>
             {
                 allPostcodes.filter(selected => selected.name === state).map((data) => data.city.map(city => (
-                    <option key={city.name} value={city.name}>{city.name}</option>
+                    <option key={city.name} value={city.name} selected={defaultCity === city.name}>{city.name}</option>
                 )))
             }
         </>
     )
 }
 
-const getPostcodeByCity = (city: string) => {
+const getPostcodeByCity = (city: string, defaultPostcode: string | undefined) => {
     const postcodes = findCities(city, true)?.postcodes;
 
     if (postcodes === undefined) {
@@ -159,7 +202,7 @@ const getPostcodeByCity = (city: string) => {
         <>
             {
                 postcodes.map(code => (
-                    <option key={code} value={code}>{code}</option>
+                    <option key={code} value={code} selected={defaultPostcode === code}>{code}</option>
                 ))
             }
         </>
