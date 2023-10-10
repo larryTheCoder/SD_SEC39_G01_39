@@ -6,6 +6,7 @@ import axios from "axios";
 export function ChangePassword() {
     const [currentPassword, setCurrentPassword] = useState("")
     const [newPassword, setNewPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [allowed, setAllowed] = useState(false)
     const [result, setResult] = useState(<></>)
@@ -29,6 +30,9 @@ export function ChangePassword() {
             case 1:
                 setNewPassword(input)
                 break
+            case 2:
+                setConfirmPassword(input)
+                break;
         }
 
         let validPassword = (/.{8,}/).test(currentPassword)
@@ -45,6 +49,7 @@ export function ChangePassword() {
             hasLowercase = (/(?=.*?[a-z])/).test(input)
             hasDigit = (/(?=.*?[0-9])/).test(input)
             hasSpecial = (/(?=.*?[#?!@$%^&*\-])/).test(input)
+            isMatched = confirmPassword === input
 
             setValidation({
                 ...validate,
@@ -53,6 +58,7 @@ export function ChangePassword() {
                 hasLowercase: hasLowercase,
                 hasDigit: hasDigit,
                 hasSpecial: hasSpecial,
+                isMatched: isMatched
             })
         } else if (state === 2) {
             isMatched = newPassword === input

@@ -15,29 +15,14 @@ export default function Home() {
         registerAttempt: false
     })
 
-    const [validate, setMinimumLength] = useState({
-        length: false,
-        hasUppercase: false,
-        hasLowercase: false,
-        hasDigit: false,
-        hasSpecial: false,
-        isMatched: false
-    })
-
     const [registrationData, setRegistrationData] = useState({
         authToken: "",
         emailAddress: "",
-        password: "",
-        confirmPassword: ""
+        password: ""
     })
 
-    const [output, setOutput] = useState<{
-        formOutput?: React.JSX.Element
-    }>()
-
-    const [result, setResult] = useState<{
-        formOutput?: React.JSX.Element
-    }>()
+    const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
+    const [result, setResult] = useState<React.JSX.Element | undefined>(undefined)
 
     const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -47,32 +32,82 @@ export default function Home() {
         try {
             const response = await axios.post("/api/register", registrationData)
 
-            setResult({formOutput: (<p className="text-gray-500"><Success/>{response.data.status}</p>)})
+            setResult(<p className="text-gray-500"><Success/>{response.data.status}</p>)
         } catch (e) {
             if (axios.isAxiosError(e) && e.response !== undefined) {
-                setResult({formOutput: (<p className="text-red-500"><Failed/>{e.response.data.message}</p>)})
+                setResult(<p className="text-red-500"><Failed/>{e.response.data.message}</p>)
             } else {
-                setResult({formOutput: (<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)})
+                setResult(<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)
             }
         }
 
         setAnimation({...animation, registerAttempt: false})
     }
 
-    const validatePassword = (password: string) => {
-        setMinimumLength({
-            length: (/.{8,}/).test(password),
-            hasUppercase: (/(?=.*?[A-Z])/).test(password),
-            hasLowercase: (/(?=.*?[a-z])/).test(password),
-            hasDigit: (/(?=.*?[0-9])/).test(password),
-            hasSpecial: (/(?=.*?[#?!@$%^&*\-])/).test(password),
-            isMatched: password === registrationData.confirmPassword
-        })
+    const [allowed, setAllowed] = useState(false)
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const [validate, setValidation] = useState({
+        length: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasDigit: false,
+        hasSpecial: false,
+        isMatched: false
+    })
+
+    const onPasswordChange = (passChange: string, state: number) => {
+        if (state === 0) {
+            setPassword(passChange)
+        } else if (state === 1) {
+            setConfirmPassword(passChange)
+        }
+
+        let validPassword = (/.{8,}/).test(passChange)
+        let length = validate.length
+        let hasUppercase = validate.hasUppercase
+        let hasLowercase = validate.hasLowercase
+        let hasDigit = validate.hasDigit
+        let hasSpecial = validate.hasSpecial
+        let isMatched = validate.isMatched
+
+        if (state === 0) {
+            length = (/.{8,}/).test(passChange)
+            hasUppercase = (/(?=.*?[A-Z])/).test(passChange)
+            hasLowercase = (/(?=.*?[a-z])/).test(passChange)
+            hasDigit = (/(?=.*?[0-9])/).test(passChange)
+            hasSpecial = (/(?=.*?[#?!@$%^&*\-])/).test(passChange)
+            isMatched = passChange === confirmPassword
+
+            setValidation({
+                ...validate,
+                length: length,
+                hasUppercase: hasUppercase,
+                hasLowercase: hasLowercase,
+                hasDigit: hasDigit,
+                hasSpecial: hasSpecial,
+                isMatched: isMatched
+            })
+
+            setRegistrationData({
+                ...registrationData,
+                password: passChange
+            })
+        } else if (state === 1) {
+            isMatched = passChange === password
+
+            setValidation({
+                ...validate,
+                isMatched: isMatched
+            })
+        }
+
+        setAllowed(validPassword && length && hasUppercase && hasLowercase && hasDigit && hasSpecial && isMatched)
     }
 
     const onBlur = async () => {
         if (!(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/).test(registrationData.authToken)) {
-            setOutput({formOutput: (<p><Failed/>Input is not a valid UUID string</p>)});
+            setOutput(<p><Failed/>Input is not a valid UUID string</p>);
             return;
         }
 
@@ -82,12 +117,12 @@ export default function Home() {
         // 403 - Forbidden
 
         try {
-            setOutput({formOutput: (<p><Loading/>Validating your device identifier.</p>)})
+            setOutput(<p><Loading/>Validating your device identifier.</p>)
 
             const resultFetch = await axios.head("/api/register", {headers: {"Application-Token": registrationData.authToken}});
 
             if (resultFetch.status === 200) {
-                setOutput({formOutput: (<p><Success/>Successfully verified your device identifier.</p>)})
+                setOutput(<p><Success/>Successfully verified your device identifier.</p>)
                 setAnimation({...animation, unverified: false})
             }
         } catch (error) {
@@ -95,11 +130,11 @@ export default function Home() {
                 const status = error.response?.status;
 
                 if (status === 404) {
-                    setOutput({formOutput: (<p className="text-red-500"><Failed/>The token could not be found.</p>)})
+                    setOutput(<p className="text-red-500"><Failed/>The token could not be found.</p>)
                 } else if (status == 403) {
-                    setOutput({formOutput: (<p className="text-red-500"><Failed/>This token is being used by another user.</p>)})
+                    setOutput(<p className="text-red-500"><Failed/>This token is being used by another user.</p>)
                 } else {
-                    setOutput({formOutput: (<p className="text-red-500"><Failed/>Something went wrong while verifying the token.</p>)})
+                    setOutput(<p className="text-red-500"><Failed/>Something went wrong while verifying the token.</p>)
                 }
             }
         }
@@ -115,7 +150,7 @@ export default function Home() {
                 <div className="group">
                     <input type="text" name="device-token" id="device-token"
                            onChange={(e) => {
-                               setOutput({formOutput: undefined})
+                               setOutput(undefined)
                                setRegistrationData({...registrationData, authToken: e.target.value})
                            }}
                            onBlur={onBlur}
@@ -126,9 +161,9 @@ export default function Home() {
                            pattern="^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$">
                     </input>
 
-                    {(output?.formOutput != undefined && (
+                    {(output != undefined && (
                         <div className="mt-2 text-sm text-gray-500 peer-[&:invalid]:hidden">
-                            {output.formOutput}
+                            {output}
                         </div>
                     ))}
 
@@ -147,12 +182,10 @@ export default function Home() {
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
                 <EmailTextBox onChange={(email) => setRegistrationData({...registrationData, emailAddress: email})} isDisabled={animation.unverified}/>
                 <PasswordInputBox onChange={(password) => {
-                    setRegistrationData({...registrationData, password: password})
-                    validatePassword(password)
+                    onPasswordChange(password, 0)
                 }} titleName="Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
                 <PasswordInputBox onChange={(password) => {
-                    setRegistrationData({...registrationData, confirmPassword: password})
-                    setMinimumLength({...validate, isMatched: password === registrationData.password})
+                    onPasswordChange(password, 1)
                 }} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
 
                 <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
@@ -164,10 +197,13 @@ export default function Home() {
                     <p>{(validate.isMatched && <Success/>) || (<Failed/>)}Password must match</p>
                 </div>
 
-                <SubmissionButton title="Create account" currentState={animation.registerAttempt} isDisabled={animation.unverified}/>
-                <div className="mt-2 text-sm">
-                    {result?.formOutput === undefined || (result.formOutput)}
-                </div>
+                <SubmissionButton title="Create account" currentState={animation.registerAttempt} isDisabled={animation.unverified || !allowed}/>
+
+                {result === undefined ? <></> : (
+                    <div className="mt-2 text-sm">
+                        {result}
+                    </div>
+                )}
 
                 <SignIn/>
             </form>
