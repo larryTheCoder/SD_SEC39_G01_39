@@ -9,73 +9,11 @@ import {Failed} from "@/components/failed"
 import {Success} from "@/components/success"
 import {useParams} from "next/navigation"
 import {Loading} from "@/components/loading"
-import {ValidationInput} from "@/app/reset/options";
+import {onPasswordChange, ValidationInput} from "@/app/reset/options";
 
 const delay = (ms: number) => new Promise(
     resolve => setTimeout(resolve, ms)
 );
-
-export function onPasswordChange(
-    passChange: string,
-    state: number,
-    validate: ValidationInput,
-    password: string,
-    confirmPassword: string,
-    setPassword: (e: string) => void,
-    setConfirmPassword: (e: string) => void,
-    setValidation: (e: ValidationInput) => void,
-    setAllowed: (e: boolean) => void
-) {
-    if (state === 0) {
-        setPassword(passChange)
-    } else if (state === 1) {
-        setConfirmPassword(passChange)
-    }
-
-    let validPassword = (/.{8,}/).test(passChange)
-    let length = validate.length
-    let hasUppercase = validate.hasUppercase
-    let hasLowercase = validate.hasLowercase
-    let hasDigit = validate.hasDigit
-    let hasSpecial = validate.hasSpecial
-    let isMatched = validate.isMatched
-
-    if (state === 0) {
-        length = (/.{8,}/).test(passChange)
-        hasUppercase = (/(?=.*?[A-Z])/).test(passChange)
-        hasLowercase = (/(?=.*?[a-z])/).test(passChange)
-        hasDigit = (/(?=.*?[0-9])/).test(passChange)
-        hasSpecial = (/(?=.*?[#?!@$%^&*\-])/).test(passChange)
-        isMatched = passChange === confirmPassword
-
-        console.log(passChange)
-        console.log(confirmPassword)
-
-        setValidation({
-            ...validate,
-            length: length,
-            hasUppercase: hasUppercase,
-            hasLowercase: hasLowercase,
-            hasDigit: hasDigit,
-            hasSpecial: hasSpecial,
-            isMatched: isMatched
-        })
-    } else if (state === 1) {
-        isMatched = passChange === password
-
-        console.log("----")
-        console.log(passChange)
-        console.log(password)
-        console.log(confirmPassword)
-
-        setValidation({
-            ...validate,
-            isMatched: isMatched
-        })
-    }
-
-    setAllowed(validPassword && length && hasUppercase && hasLowercase && hasDigit && hasSpecial && isMatched)
-}
 
 export default function Home() {
     const params = useParams()

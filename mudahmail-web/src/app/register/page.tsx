@@ -8,8 +8,7 @@ import {CardMenu} from "@/components/card";
 import {SignIn} from "@/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import axios from "axios";
-import {onPasswordChange} from "@/app/reset/[token]/page";
-import {ValidationInput} from "@/app/reset/options";
+import {onPasswordChange, ValidationInput} from "@/app/reset/options";
 
 export default function Home() {
     const [animation, setAnimation] = useState({
