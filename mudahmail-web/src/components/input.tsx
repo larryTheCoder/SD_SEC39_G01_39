@@ -21,7 +21,7 @@ export function EmailTextBox({onChange, isDisabled, emailContent}: {
                    required={true}
                    disabled={isDisabled ?? false}
                    value={emailContent}
-                   pattern=".[A-Za-z0-9._%+\-]{1,16}.[@]{1}.[a-z0-9.\-]{1,16}.[.]{1}.[a-z]{1,}"
+                   pattern=".[A-Za-z0-9._%+\-]{1,32}.[@]{1}.[a-z0-9.\-]{1,16}.[.]{1}.[a-z]{1,}"
             />
             <span className="mt-2 hidden text-sm text-red-500 peer-[&:not(:placeholder-shown):not(:focus):invalid]:block">
                 <Failed/>

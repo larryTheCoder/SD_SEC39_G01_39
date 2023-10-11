@@ -8,6 +8,8 @@ import {CardMenu} from "@/components/card";
 import {SignIn} from "@/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import axios from "axios";
+import {onPasswordChange} from "@/app/reset/[token]/page";
+import {ValidationInput} from "@/app/reset/options";
 
 export default function Home() {
     const [animation, setAnimation] = useState({
@@ -15,39 +17,13 @@ export default function Home() {
         registerAttempt: false
     })
 
-    const [registrationData, setRegistrationData] = useState({
-        authToken: "",
-        emailAddress: "",
-        password: ""
-    })
-
-    const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
-    const [result, setResult] = useState<React.JSX.Element | undefined>(undefined)
-
-    const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        setAnimation({...animation, registerAttempt: true})
-
-        try {
-            const response = await axios.post("/api/register", registrationData)
-
-            setResult(<p className="text-gray-500"><Success/>{response.data.status}</p>)
-        } catch (e) {
-            if (axios.isAxiosError(e) && e.response !== undefined) {
-                setResult(<p className="text-red-500"><Failed/>{e.response.data.message}</p>)
-            } else {
-                setResult(<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)
-            }
-        }
-
-        setAnimation({...animation, registerAttempt: false})
-    }
+    const [authToken, setAuthenticationToken] = useState("")
+    const [emailAddress, setEmailAddress] = useState("")
 
     const [allowed, setAllowed] = useState(false)
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
-    const [validate, setValidation] = useState({
+    const [validate, setValidation] = useState<ValidationInput>({
         length: false,
         hasUppercase: false,
         hasLowercase: false,
@@ -56,57 +32,11 @@ export default function Home() {
         isMatched: false
     })
 
-    const onPasswordChange = (passChange: string, state: number) => {
-        if (state === 0) {
-            setPassword(passChange)
-        } else if (state === 1) {
-            setConfirmPassword(passChange)
-        }
-
-        let validPassword = (/.{8,}/).test(passChange)
-        let length = validate.length
-        let hasUppercase = validate.hasUppercase
-        let hasLowercase = validate.hasLowercase
-        let hasDigit = validate.hasDigit
-        let hasSpecial = validate.hasSpecial
-        let isMatched = validate.isMatched
-
-        if (state === 0) {
-            length = (/.{8,}/).test(passChange)
-            hasUppercase = (/(?=.*?[A-Z])/).test(passChange)
-            hasLowercase = (/(?=.*?[a-z])/).test(passChange)
-            hasDigit = (/(?=.*?[0-9])/).test(passChange)
-            hasSpecial = (/(?=.*?[#?!@$%^&*\-])/).test(passChange)
-            isMatched = passChange === confirmPassword
-
-            setValidation({
-                ...validate,
-                length: length,
-                hasUppercase: hasUppercase,
-                hasLowercase: hasLowercase,
-                hasDigit: hasDigit,
-                hasSpecial: hasSpecial,
-                isMatched: isMatched
-            })
-
-            setRegistrationData({
-                ...registrationData,
-                password: passChange
-            })
-        } else if (state === 1) {
-            isMatched = passChange === password
-
-            setValidation({
-                ...validate,
-                isMatched: isMatched
-            })
-        }
-
-        setAllowed(validPassword && length && hasUppercase && hasLowercase && hasDigit && hasSpecial && isMatched)
-    }
+    const [output, setOutput] = useState<React.JSX.Element | undefined>(undefined)
+    const [result, setResult] = useState<React.JSX.Element | undefined>(undefined)
 
     const onBlur = async () => {
-        if (!(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/).test(registrationData.authToken)) {
+        if (!(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/).test(authToken)) {
             setOutput(<p><Failed/>Input is not a valid UUID string</p>);
             return;
         }
@@ -119,7 +49,7 @@ export default function Home() {
         try {
             setOutput(<p><Loading/>Validating your device identifier.</p>)
 
-            const resultFetch = await axios.head("/api/register", {headers: {"Application-Token": registrationData.authToken}});
+            const resultFetch = await axios.head("/api/register", {headers: {"Application-Token": authToken}});
 
             if (resultFetch.status === 200) {
                 setOutput(<p><Success/>Successfully verified your device identifier.</p>)
@@ -140,6 +70,30 @@ export default function Home() {
         }
     }
 
+    const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        setAnimation({...animation, registerAttempt: true})
+
+        try {
+            const response = await axios.post("/api/register", {
+                authToken: authToken,
+                emailAddress: emailAddress,
+                password: password
+            })
+
+            setResult(<p className="text-gray-500"><Success/>{response.data.status}</p>)
+        } catch (e) {
+            if (axios.isAxiosError(e) && e.response !== undefined) {
+                setResult(<p className="text-red-500"><Failed/>{e.response.data.message}</p>)
+            } else {
+                setResult(<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)
+            }
+        }
+
+        setAnimation({...animation, registerAttempt: false})
+    }
+
     return (
         <CardMenu title="Create an account">
             <div>
@@ -151,7 +105,7 @@ export default function Home() {
                     <input type="text" name="device-token" id="device-token"
                            onChange={(e) => {
                                setOutput(undefined)
-                               setRegistrationData({...registrationData, authToken: e.target.value})
+                               setAuthenticationToken(e.target.value)
                            }}
                            onBlur={onBlur}
                            className="invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
@@ -180,12 +134,12 @@ export default function Home() {
             </div>
 
             <form className="space-y-4 md:space-y-6 group" method="post" onSubmit={onSubmitHandler} noValidate={true}>
-                <EmailTextBox onChange={(email) => setRegistrationData({...registrationData, emailAddress: email})} isDisabled={animation.unverified}/>
-                <PasswordInputBox onChange={(password) => {
-                    onPasswordChange(password, 0)
+                <EmailTextBox onChange={(email) => setEmailAddress(email)} isDisabled={animation.unverified}/>
+                <PasswordInputBox onChange={(e) => {
+                    onPasswordChange(e, 0, validate, password, confirmPassword, setPassword, setConfirmPassword, setValidation, setAllowed)
                 }} titleName="Password" inputName="password" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
-                <PasswordInputBox onChange={(password) => {
-                    onPasswordChange(password, 1)
+                <PasswordInputBox onChange={(e) => {
+                    onPasswordChange(e, 1, validate, password, confirmPassword, setPassword, setConfirmPassword, setValidation, setAllowed)
                 }} titleName="Confirm Password" inputName="password-confirm" pattern="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}" isDisabled={animation.unverified} showTooltip={false}/>
 
                 <div className="grid grid-flow-row auto-rows-max gap-1 mt-4 text-sm mb-2">
