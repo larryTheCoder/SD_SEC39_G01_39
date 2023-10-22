@@ -48,7 +48,6 @@ export async function GET(
                     break;
             }
         } else {
-            console.log(jsonData)
             data = jsonData["weight"];
         }
 
