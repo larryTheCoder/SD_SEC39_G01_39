@@ -1,9 +1,11 @@
 import {NextRequest, NextResponse} from "next/server"
-import {bcrypt, prisma} from "@/libs/database"
+import {client, prisma} from "@/libs/database"
 import {sendVerificationMail} from "@/libs/mailing";
 import {getToken} from "next-auth/jwt";
-import {s3, S3_BUCKET} from "@/libs/s3";
+import {s3} from "@/libs/s3";
+import {S3_BUCKET} from "@/libs/config";
 import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
+import bcrypt from "bcrypt";
 
 const emailRegex = /.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i
 const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/
@@ -23,18 +25,27 @@ export async function PUT(
     if (formType === "avatar_upload") {
         const files = formData.getAll("file") as File[];
 
-        await prisma.userData.update({
-            where: {userSnowflake: claims.id},
-            data: {
-                userPicturePath: `profiles/${claims.id}/profile-image`
-            }
-        })
-
         if (files.length > 0) {
             const file = files[0]
 
             const Body = (await file.arrayBuffer()) as Buffer;
             await s3.send(new PutObjectCommand({Bucket: S3_BUCKET, Key: `profiles/${claims.id}/profile-image`, Body, ContentType: file.type}));
+
+            await prisma.userData.update({
+                where: {userSnowflake: claims.id},
+                data: {
+                    userPicturePath: `profiles/${claims.id}/profile-image`
+                }
+            })
+
+            const user = await client.get(`user_data:${claims.id}`)
+            if (user !== null) {
+                const user_data = JSON.parse(user)
+
+                user_data["profile"] = `profiles/${claims.id}/profile-image`;
+
+                await client.set(`user_data:${claims.id}`, JSON.stringify(user_data))
+            }
         }
     } else if (formType === "password_change") {
         const currentPassword = formData.get("current_password") as string
@@ -52,15 +63,15 @@ export async function PUT(
             return NextResponse.json({message: 'The password does not match the required regex input.'}, {status: 406})
         }
 
-        if (await bcrypt.compare(currentPassword, userData.password, false)) {
-            if (await bcrypt.compare(newPassword, userData.password, false)) {
+        if (await bcrypt.compare(currentPassword, userData.password)) {
+            if (await bcrypt.compare(newPassword, userData.password)) {
                 return NextResponse.json({message: 'New password cannot be the same with current password.'}, {status: 401})
             }
 
             await prisma.userData.update({
                 where: {userSnowflake: claims.id},
                 data: {
-                    password: await bcrypt.hash(newPassword, 10, false),
+                    password: await bcrypt.hash(newPassword, 10),
                 }
             })
 
@@ -152,6 +163,15 @@ export async function DELETE(
             userPicturePath: null
         }
     })
+
+    const user = await client.get(`user_data:${claims.id}`)
+    if (user !== null) {
+        const user_data = JSON.parse(user)
+
+        user_data["profile"] = null;
+
+        await client.set(`user_data:${claims.id}`, JSON.stringify(user_data))
+    }
 
     return NextResponse.json(await s3.send(new DeleteObjectCommand({Bucket: S3_BUCKET, Key: `profiles/${claims.id}/profile-image`})))
 }

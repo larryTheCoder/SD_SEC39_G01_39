@@ -1,12 +1,11 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import {bcrypt, prisma} from "@/libs/database";
+import {client, prisma} from "@/libs/database";
 import {NextAuthOptions, Session} from "next-auth";
 import {JWT} from "next-auth/jwt";
 import {AdapterUser} from "next-auth/adapters";
 import {Role} from "@/interface";
-import {GetObjectCommand} from "@aws-sdk/client-s3";
-import {s3, S3_BUCKET} from "@/libs/s3";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import {S3_BUCKET, S3_HOST} from "@/libs/config";
+import bcrypt from "bcrypt";
 
 const emailRegex = (/.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i)
 const passwordRegex = (/.{8,}/)
@@ -30,10 +29,13 @@ export const config: NextAuthOptions = {
 
                 let userData = await prisma.userData.findFirst({
                     where: {AND: [{email: credentials.email}]},
-                    select: {password: true, userSnowflake: true, email: true, isAdmin: true}
+                    select: {password: true, userSnowflake: true, email: true, isAdmin: true, userPicturePath: true}
                 });
 
-                if (userData !== null && await bcrypt.compare(credentials.password, userData.password, false)) {
+                if (userData !== null && await bcrypt.compare(credentials.password, userData.password)) {
+                    const data = {email: userData.email, profile: userData.userPicturePath, role: userData.isAdmin}
+                    await client.set(`user_data:${userData.userSnowflake}`, JSON.stringify(data))
+
                     return {email: userData.email, id: userData.userSnowflake, role: userData.isAdmin ? Role.admin : Role.user}
                 }
 
@@ -76,21 +78,19 @@ export const config: NextAuthOptions = {
 
 async function doesThings(token: JWT) {
     if (token.id) {
-        const userData = await prisma.userData.findFirst({
-            where: {userSnowflake: token.id}
-        })
+        const userData = await client.get(`user_data:${token.id}`);
 
         if (userData !== null) {
-            if (userData.userPicturePath !== null && userData.userPicturePath.length > 0) {
-                const command = new GetObjectCommand({Bucket: S3_BUCKET, Key: userData.userPicturePath});
+            const user = JSON.parse(userData)
 
-                token.picture = await getSignedUrl(s3, command, {expiresIn: 3600});
+            if (user.profile && user.profile.length > 0) {
+                token.picture = "https://" + S3_BUCKET + "." + S3_HOST + "/" + user.profile;
             } else {
                 token.picture = "/default-profile.png";
             }
 
-            token.email = userData.email;
-            token.role = userData.isAdmin ? Role.admin : Role.user;
+            token.email = user.email;
+            token.role = user.isAdmin ? Role.admin : Role.user;
         } else {
             token.role = Role.user;
         }

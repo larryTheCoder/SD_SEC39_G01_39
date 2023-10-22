@@ -1,6 +1,6 @@
 "use client"
 
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {CardMenu} from "@/components/card";
 import {useParams} from "next/navigation";
 import axios from "axios";
@@ -14,30 +14,24 @@ export default function Home() {
 
     const [verifyStatus, setVerificationStatus] = useState(<span><Loading/>Please hold, we are verifying your email, this make take a few seconds to complete.</span>)
     const [isSuccessful, setFormStatus] = useState(true);
-    const [isRunning, setIsRunning] = useState(false);
 
-    const call = (async () => {
-        if (isRunning) {
-            return;
-        }
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const result = await axios.get("/api/verify?token=" + token)
 
-        setIsRunning(true)
-        try {
-            const result = await axios.get("/api/verify?token=" + token)
-
-            if (result.status === 200) {
-                setVerificationStatus(<span><Success/>Your email has been successfully verified. You may return to the login page to continue accessing your devices.</span>)
+                if (result.status === 200) {
+                    setVerificationStatus(<span><Success/>Your email has been successfully verified. You may return to the login page to continue accessing your devices.</span>)
+                }
+            } catch (e) {
+                setVerificationStatus(<span><Failed/>The token you have provided is invalid, please try again later.</span>)
             }
-        } catch (e) {
-            setVerificationStatus(<span><Failed/>The token you have provided is invalid, please try again later.</span>)
+
+            setFormStatus(false);
         }
 
-        setFormStatus(false);
-    });
-
-    if (!isRunning) {
-        call();
-    }
+        fetchData().catch(console.error)
+    }, [token]);
 
     return (
         <CardMenu title="Email Verification">

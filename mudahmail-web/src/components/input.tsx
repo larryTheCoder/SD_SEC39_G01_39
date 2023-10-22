@@ -16,7 +16,7 @@ export function EmailTextBox({onChange, isDisabled, emailContent}: {
                    onChange={e => {
                        onChange(e.target.value);
                    }}
-                   className="bg-gray-50 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
+                   className="disabled:bg-gray-100 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
                    placeholder="username@gmail.com"
                    required={true}
                    disabled={isDisabled ?? false}
@@ -47,7 +47,7 @@ export function PasswordInputBox({onChange, titleName, pattern, showTooltip, inp
                    onChange={e => {
                        onChange(e.target.value);
                    }}
-                   className="bg-gray-50 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
+                   className="disabled:bg-gray-100 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
                    required={true}
                    disabled={isDisabled}
                    pattern={pattern}

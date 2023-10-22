@@ -1,8 +1,9 @@
 import {NextRequest, NextResponse} from "next/server";
-import {bcrypt, prisma} from "@/libs/database";
+import {prisma} from "@/libs/database";
 import {createHmac, randomBytes} from "crypto";
 import {getSHA256SecretKey} from "@/libs/auth";
 import {sendPasswordResetMail} from "@/libs/mailing";
+import bcrypt from "bcrypt";
 
 export async function POST(
     request: Request
@@ -81,7 +82,7 @@ export async function PUT(
             email: result.userEmail,
         },
         data: {
-            password: await bcrypt.hash(inputData.password, 10, false)
+            password: await bcrypt.hash(inputData.password, 10)
         }
     })
 

@@ -10,10 +10,7 @@ import {Success} from "@/components/success"
 import {useParams} from "next/navigation"
 import {Loading} from "@/components/loading"
 import {onPasswordChange, ValidationInput} from "@/app/reset/options";
-
-const delay = (ms: number) => new Promise(
-    resolve => setTimeout(resolve, ms)
-);
+import delay from "@/libs/timer";
 
 export default function Home() {
     const params = useParams()

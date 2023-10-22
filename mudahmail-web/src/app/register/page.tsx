@@ -9,6 +9,7 @@ import {SignIn} from "@/components/tooltips";
 import {EmailTextBox, PasswordInputBox, SubmissionButton} from "@/components/input";
 import axios from "axios";
 import {onPasswordChange, ValidationInput} from "@/app/reset/options";
+import delay from "@/libs/timer";
 
 export default function Home() {
     const [animation, setAnimation] = useState({
@@ -74,19 +75,31 @@ export default function Home() {
 
         setAnimation({...animation, registerAttempt: true})
 
+        const formData = new FormData()
+        formData.set("token", authToken)
+        formData.set("email", emailAddress)
+        formData.set("password", password)
+
         try {
-            const response = await axios.post("/api/register", {
-                authToken: authToken,
-                emailAddress: emailAddress,
-                password: password
+            const response = await axios.post("/api/register", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                }
             })
 
             setResult(<p className="text-gray-500"><Success/>{response.data.status}</p>)
+
+            setAnimation({...animation, registerAttempt: false})
+
+            await delay(5 * 1000)
+
+            window.location.href = "/"
+            return;
         } catch (e) {
-            if (axios.isAxiosError(e) && e.response !== undefined) {
+            if (axios.isAxiosError(e) && e.response !== undefined && e.response.data.message) {
                 setResult(<p className="text-red-500"><Failed/>{e.response.data.message}</p>)
             } else {
-                setResult(<p className="text-red-500"><Failed/>Something went terribly wrong...</p>)
+                setResult(<p className="text-red-500"><Failed/>Something went wrong in our backend.</p>)
             }
         }
 
@@ -107,7 +120,7 @@ export default function Home() {
                                setAuthenticationToken(e.target.value)
                            }}
                            onBlur={onBlur}
-                           className="invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
+                           className="disabled:bg-gray-100 invalid:[&:not(:placeholder-shown):not(:focus)]:bg-red-50 border border-gray-300 invalid:[&:not(:placeholder-shown):not(:focus)]:border-red-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 peer"
                            placeholder="8faaf521-123c-4a88-88c8-4cdcc6887107"
                            required={true}
                            disabled={!animation.unverified}

@@ -62,7 +62,7 @@ export function ProfileUpdate({profilePicture, setProfilePicture}: {
         try {
             await axios.delete('/api/update')
 
-            setProfilePicture("")
+            setProfilePicture("/default-profile.png")
         } catch (error) {
             if (axios.isAxiosError(error) && error.response !== undefined) {
                 const response = error.response;
