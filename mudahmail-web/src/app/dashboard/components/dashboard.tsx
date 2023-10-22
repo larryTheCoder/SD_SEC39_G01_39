@@ -14,7 +14,6 @@ export function Dashboard() {
     const [allTypes, setAllTypes] = useState<string[]>([])
 
     const fetchData = async () => {
-        console.log("REFRESH")
         try {
             const allData: MailboxType[] = (await axios.get("/api/stats")).data;
             setTypes(allData);

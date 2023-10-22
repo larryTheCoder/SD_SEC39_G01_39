@@ -17,7 +17,6 @@ export function ProfileUpdate({profilePicture, setProfilePicture}: {
             const reader = new FileReader()
             reader.onload = async (event) => {
                 if (!event.target) {
-                    console.log("Something went wrong??")
                     return;
                 }
 

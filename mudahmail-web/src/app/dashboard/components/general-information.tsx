@@ -1,5 +1,5 @@
 import {allPostcodes, findCities, getStates,} from "malaysia-postcodes";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
 import {Failed} from "@/components/failed";
 import {useSession} from "next-auth/react";
@@ -11,7 +11,6 @@ export function GeneralInformation() {
     const [loading, setLoading] = useState(false)
     const [allowed, setAllowed] = useState(true)
     const [result, setResult] = useState(<></>)
-    const [isRunning, setIsRunning] = useState(false);
     const [defaultValue, setDefaultValue] = useState<{
         email: string,
         firstName: string,
@@ -22,6 +21,36 @@ export function GeneralInformation() {
         postcode: string,
         phoneNumber: string
     }>()
+
+    useEffect(() => {
+        if (session === null) {
+            return;
+        }
+
+        const asyncFetch = async () => {
+            try {
+                const status = await axios.get("/api/profile")
+                const userInformation = status.data;
+
+                setDefaultValue({
+                    email: userInformation.email,
+                    firstName: userInformation.firstName,
+                    lastName: userInformation.lastName,
+                    address: userInformation.address,
+                    city: userInformation.city,
+                    state: userInformation.state,
+                    postcode: userInformation.postcode,
+                    phoneNumber: userInformation.phoneNumber
+                })
+
+                setCity(getCityByState(userInformation.state, userInformation.city))
+                setPostcode(getPostcodeByCity(userInformation.city, userInformation.postcode))
+            } catch (e) {
+            }
+        }
+
+        asyncFetch().catch(console.log)
+    }, [session]);
 
     if (session === null) {
         return (<></>);
@@ -65,38 +94,6 @@ export function GeneralInformation() {
         }
 
         setLoading(false)
-    }
-
-    const call = (async () => {
-        if (isRunning) {
-            return;
-        }
-
-        setIsRunning(true)
-        try {
-            const status = await axios.get("/api/profile")
-            const userInformation = status.data;
-
-            setDefaultValue({
-                email: userInformation.email,
-                firstName: userInformation.firstName,
-                lastName: userInformation.lastName,
-                address: userInformation.address,
-                city: userInformation.city,
-                state: userInformation.state,
-                postcode: userInformation.postcode,
-                phoneNumber: userInformation.phoneNumber
-            })
-
-            console.log(userInformation.postcode)
-            setCity(getCityByState(userInformation.state, userInformation.city))
-            setPostcode(getPostcodeByCity(userInformation.city, userInformation.postcode))
-        } catch (e) {
-        }
-    });
-
-    if (!isRunning) {
-        call();
     }
 
     return (

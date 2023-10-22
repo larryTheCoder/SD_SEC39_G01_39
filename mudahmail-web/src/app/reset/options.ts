@@ -40,9 +40,6 @@ export function onPasswordChange(
         hasSpecial = (/(?=.*?[#?!@$%^&*\-])/).test(passChange)
         isMatched = passChange === confirmPassword
 
-        console.log(passChange)
-        console.log(confirmPassword)
-
         setValidation({
             ...validate,
             length: length,
@@ -54,11 +51,6 @@ export function onPasswordChange(
         })
     } else if (state === 1) {
         isMatched = passChange === password
-
-        console.log("----")
-        console.log(passChange)
-        console.log(password)
-        console.log(confirmPassword)
 
         setValidation({
             ...validate,
