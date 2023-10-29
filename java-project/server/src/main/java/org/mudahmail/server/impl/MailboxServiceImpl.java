@@ -10,7 +10,7 @@ import org.mudahmail.rpc.NotificationRequest;
 import org.mudahmail.rpc.NotificationType;
 import org.mudahmail.rpc.RegistrationRequest;
 import org.mudahmail.server.Service;
-import org.mudahmail.server.models.Events;
+import org.mudahmail.server.models.EventsEntity;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +31,7 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
         this.service = service;
     }
 
-    public void sendNotification(String id, Events.MailEvent event, Map<String, String> data) {
+    public void sendNotification(String id, EventsEntity.EventTypeEntity event, Map<String, String> data) {
         try {
             var notification = activeNotifications.get(id);
             if (notification == null) {

@@ -21,11 +21,12 @@
         <property name="hibernate.hikari.maximumPoolSize">20</property> <!-- Maximum number of connections -->
 
         <!-- Should perform database migration automatically. -->
-        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.hbm2ddl.auto">validate</property>
 
         <!-- SQL Mapping classes for Hibernate ORM. -->
-        <mapping class="org.mudahmail.server.models.BiometricInfo"/>
         <mapping class="org.mudahmail.server.models.MailboxEntity"/>
-        <mapping class="org.mudahmail.server.models.Events"/>
+        <mapping class="org.mudahmail.server.models.BiometricAuthEntity"/>
+        <mapping class="org.mudahmail.server.models.EventsEntity"/>
+        <mapping class="org.mudahmail.server.models.UserDataEntity"/>
     </session-factory>
 </hibernate-configuration>

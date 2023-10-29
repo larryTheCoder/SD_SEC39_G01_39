@@ -121,12 +121,8 @@ public class WeightAdapter implements Runnable {
         DecimalFormat df = new DecimalFormat("#.####");
         df.setRoundingMode(RoundingMode.CEILING);
 
-        log.info("Weight: {}kg", df.format(averageWeight));
-
         // Do locking mechanism.
         if (averageWeight > MINIMUM_WEIGHT) {
-            log.info("Above minimum, {} {}", delayWait, client.getRelayAdapter().isLocked());
-
             if (!client.getRelayAdapter().isLocked()) {
                 delayWait = Math.max(--delayWait, 0);
 

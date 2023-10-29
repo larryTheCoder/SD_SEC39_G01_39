@@ -52,7 +52,6 @@ public class MailboxClient {
         }));
 
         taskManager = new ServerTaskExecutor();
-        eventHandler = new EventHandler(this);
 
         pi4j = Pi4J.newAutoContext();
 
@@ -67,6 +66,8 @@ public class MailboxClient {
 
         new ResetAdapter(pi4j);
         new MagnetAdapter(this, pi4j);
+
+        eventHandler = new EventHandler(this);
 
         // OPTIONAL: print the registry
         PrintInfo.printRegistry(console, pi4j);

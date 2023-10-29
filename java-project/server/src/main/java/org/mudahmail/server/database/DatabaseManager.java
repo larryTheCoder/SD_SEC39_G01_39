@@ -6,8 +6,10 @@ import lombok.extern.log4j.Log4j2;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.mudahmail.rpc.NotificationRequest;
-import org.mudahmail.server.models.Events;
+import org.mudahmail.server.models.EventsEntity;
 import org.mudahmail.server.models.MailboxEntity;
+
+import static org.mudahmail.server.models.EventsEntity.EventTypeEntity.DOOR_STATE;
 
 @Log4j2(topic = "DatabaseManager")
 public class DatabaseManager {
@@ -48,12 +50,12 @@ public class DatabaseManager {
         var device = getDeviceById(request.getRegistrationId());
 
         try (var session = getSessionFactory().getCurrentSession()) {
-            Events event = new Events();
-            event.setDevice(device);
+            EventsEntity event = new EventsEntity();
+            event.setDeviceAuthToken(device.getAuthToken());
             switch (request.getType()) {
-                case DOOR_STATE -> event.setEventType(Events.MailEvent.DOOR_STATE);
-                case WEIGHT_STATE -> event.setEventType(Events.MailEvent.WEIGHT_STATE);
-                case MOVEMENT_DETECTION -> event.setEventType(Events.MailEvent.MOVEMENT_DETECTION);
+                case DOOR_STATE -> event.setEventType(EventsEntity.EventTypeEntity.DOOR_STATE);
+                case WEIGHT_STATE -> event.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE);
+                case MOVEMENT_DETECTION -> event.setEventType(EventsEntity.EventTypeEntity.MOVEMENT_DETECTION);
             }
             event.setJsonData(request.getData());
             event.setTimestamp(request.getTimestamp());

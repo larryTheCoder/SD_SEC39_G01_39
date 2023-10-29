@@ -42,6 +42,9 @@ public class EventHandler {
         ManagedChannel channel = NettyChannelBuilder.forAddress(new InetSocketAddress(Constants.SERVER_ADDRESS, 5000))
                 .enableRetry()
                 .usePlaintext()
+                .keepAliveTime(30, TimeUnit.SECONDS)
+                .keepAliveTimeout(5, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true)
                 .build();
 
         asyncStub = MailboxGrpc.newStub(channel);
@@ -120,7 +123,7 @@ public class EventHandler {
 
             private void restartRegistration() {
                 if (!isRegistered) {
-                    ServerTaskExecutor.schedule(EventHandler.this::startConnection, 5, TimeUnit.SECONDS);
+                    ServerTaskExecutor.schedule(EventHandler.this::startConnection, 1, TimeUnit.SECONDS);
                 }
             }
         });
@@ -155,8 +158,7 @@ public class EventHandler {
 
                 try {
                     if (value.getType() == NotificationType.DOOR_STATE) {
-                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {
-                        });
+                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {});
 
                         if (states.containsKey("state")) {
                             var state = DoorEventState.valueOf(states.get("state"));
@@ -197,7 +199,7 @@ public class EventHandler {
 
                 client.getStatusAdapter().setConnected(false);
 
-                ServerTaskExecutor.schedule(EventHandler.this::startEventListeners, 5, TimeUnit.SECONDS);
+                ServerTaskExecutor.schedule(EventHandler.this::startEventListeners, 1, TimeUnit.SECONDS);
             }
         });
     }

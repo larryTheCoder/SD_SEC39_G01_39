@@ -34,8 +34,6 @@ public class FingerprintAdapter implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
-        log.info("Status: {}", sensor.isConnected());
-
         if (sensor.hasFingerprint()) {
             // Finger is on sensor
             Integer fingerId = sensor.searchFingerprint();
