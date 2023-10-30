@@ -6,7 +6,7 @@ COPY rpc /home/app/rpc
 COPY server /home/app/server
 COPY pom.xml /home/app
 
-RUN mvn -f /home/app/pom.xml clean package
+RUN mvn -f /home/app/pom.xml clean package -pl client -am
 
 FROM arm64v8/amazoncorretto:17
 
