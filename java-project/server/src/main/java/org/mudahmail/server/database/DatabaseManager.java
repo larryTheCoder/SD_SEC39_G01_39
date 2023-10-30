@@ -54,6 +54,7 @@ public class DatabaseManager {
             event.setDeviceAuthToken(device.getAuthToken());
             switch (request.getType()) {
                 case DOOR_STATE -> event.setEventType(EventsEntity.EventTypeEntity.DOOR_STATE);
+                case DOOR_STATUS -> event.setEventType(EventsEntity.EventTypeEntity.DOOR_STATUS);
                 case WEIGHT_STATE -> event.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE);
                 case MOVEMENT_DETECTION -> event.setEventType(EventsEntity.EventTypeEntity.MOVEMENT_DETECTION);
             }

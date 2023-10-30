@@ -9,6 +9,7 @@ import "google/protobuf/empty.proto";
 
 enum NotificationType {
   DOOR_STATE = 0;
+  DOOR_STATUS = 4;
   WEIGHT_STATE = 1;
   MOVEMENT_DETECTION = 2;
   REQUEST_HELLO = 3;

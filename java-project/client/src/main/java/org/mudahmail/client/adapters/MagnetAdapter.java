@@ -24,9 +24,9 @@ public class MagnetAdapter {
 
         button.addListener(event -> {
             if (event.state() == DigitalState.LOW) {
-                client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.OPEN);
+                client.getEventHandler().sendEventDoorStatus(EventHandler.DoorEventState.OPEN);
             } else {
-                client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.CLOSE);
+                client.getEventHandler().sendEventDoorStatus(EventHandler.DoorEventState.CLOSE);
             }
         });
     }

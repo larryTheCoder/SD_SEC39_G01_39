@@ -47,6 +47,7 @@ public class EventsEntity {
 
     public enum EventTypeEntity {
         DOOR_STATE,
+        DOOR_STATUS,
         WEIGHT_STATE,
         MOVEMENT_DETECTION;
     }

@@ -31,7 +31,7 @@ public class RelayAdapter {
 
     public void unlockDevice() {
         if (isLocked()) {
-            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.UNLOCKED);
+            client.getEventHandler().sendEventDoorState(EventHandler.DoorEventState.UNLOCKED);
 
             output.high();
         }
@@ -39,7 +39,7 @@ public class RelayAdapter {
 
     public void lockDevice() {
         if (!isLocked()) {
-            client.getEventHandler().sendEventDoor(EventHandler.DoorEventState.LOCK);
+            client.getEventHandler().sendEventDoorState(EventHandler.DoorEventState.LOCK);
 
             output.low();
         }

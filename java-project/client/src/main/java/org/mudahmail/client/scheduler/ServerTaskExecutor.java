@@ -58,7 +58,7 @@ public class ServerTaskExecutor {
 
     @SneakyThrows
     public void shutdown() {
-        executorService.shutdown();
+        executorService.shutdownNow();
         if (!executorService.awaitTermination(15, TimeUnit.SECONDS)) {
             log.warn("Unable to shutdown executor service gracefully.");
         }

@@ -42,6 +42,7 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
             switch (event) {
                 case MOVEMENT_DETECTION -> type = MOVEMENT_DETECTION;
                 case DOOR_STATE -> type = DOOR_STATE;
+                case DOOR_STATUS -> type = DOOR_STATUS;
                 case WEIGHT_STATE -> type = WEIGHT_STATE;
             }
 

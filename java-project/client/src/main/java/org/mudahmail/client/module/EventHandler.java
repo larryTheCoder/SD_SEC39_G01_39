@@ -56,7 +56,22 @@ public class EventHandler {
     /**
      * Send door state to the backend server
      */
-    public void sendEventDoor(DoorEventState state) {
+    public void sendEventDoorStatus(DoorEventState state) {
+        try {
+            NotificationRequest request = NotificationRequest.newBuilder()
+                    .setRegistrationId(Constants.CLIENT_AUTH_ID)
+                    .setType(NotificationType.DOOR_STATUS)
+                    .setData(objectMapper.writeValueAsString(Map.of("state", state.name())))
+                    .setTimestamp(System.currentTimeMillis())
+                    .build();
+
+            sendMessage(request);
+        } catch (Throwable error) {
+            log.throwing(error);
+        }
+    }
+
+    public void sendEventDoorState(DoorEventState state) {
         try {
             NotificationRequest request = NotificationRequest.newBuilder()
                     .setRegistrationId(Constants.CLIENT_AUTH_ID)
@@ -158,7 +173,8 @@ public class EventHandler {
 
                 try {
                     if (value.getType() == NotificationType.DOOR_STATE) {
-                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {});
+                        Map<String, String> states = objectMapper.readValue(value.getData(), new TypeReference<HashMap<String, String>>() {
+                        });
 
                         if (states.containsKey("state")) {
                             var state = DoorEventState.valueOf(states.get("state"));
