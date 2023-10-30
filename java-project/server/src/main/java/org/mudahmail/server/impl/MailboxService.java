@@ -30,8 +30,6 @@ public class MailboxService {
                 .permitKeepAliveTime(10, TimeUnit.SECONDS)
                 //How long a channel can stay idle (idle means no pings & messages received)
                 .maxConnectionIdle(5, TimeUnit.SECONDS)
-                //How long a channel can stay at all (even if not idle)
-                .maxConnectionAge(1, TimeUnit.MINUTES)
                 //Grace period after the channel ends
                 .maxConnectionAgeGrace(10, TimeUnit.SECONDS)
                 //Max payload size
