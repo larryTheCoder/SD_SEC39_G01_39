@@ -25,36 +25,51 @@ export async function GET(
         orderBy: {timestamp: 'desc'},
     })
 
-    return NextResponse.json(results.map((event) => {
-        let jsonData = JSON.parse(event.json_data ?? "[]")
+    const doorState = await prisma.eventData.findFirst({
+        where: {
+            AND: [
+                {device_auth_token: userData.device_auth_token},
+                {event_type: 'DOOR_STATE'}
+            ]
+        },
+        orderBy: {timestamp: 'desc'},
+    });
 
-        let type = "Weight Event"
-        let data = "";
-        if (event.event_type === "DOOR_STATE") {
-            type = "Door Event"
+    const weightState = await prisma.eventData.findFirst({
+        where: {
+            AND: [
+                {device_auth_token: userData.device_auth_token},
+                {event_type: 'WEIGHT_STATE'}
+            ]
+        },
+        orderBy: {timestamp: 'desc'},
+    });
 
-            switch (jsonData["state"]){
-                case "LOCK":
-                    data = "Locked"
-                    break;
-                case "UNLOCKED":
-                    data = "Unlocked"
-                    break;
-                case "OPEN":
-                    data = "Door Opened"
-                    break;
-                case "CLOSE":
-                    data = "Door Closed"
-                    break;
+    let locked = false
+    let currentWeight = 0.0
+    if (doorState !== null && weightState !== null) {
+        let jsonData0 = JSON.parse(doorState.json_data ?? "[]")
+        let jsonData1 = JSON.parse(weightState.json_data ?? "[]")
+
+        locked = jsonData0['state'] === 'LOCK'
+        currentWeight = parseFloat(jsonData1['weight'])
+    }
+
+    const response = {
+        events: results.map((event) => {
+            let jsonData = JSON.parse(event.json_data ?? "[]")
+
+
+            return {
+                event_type: event.event_type,
+                timestamp: new Date(Number(event.timestamp)),
+                data: jsonData
             }
-        } else {
-            data = jsonData["weight"];
-        }
+        }),
+        locked,
+        current_weight: currentWeight,
+        device_id: userData.device_auth_token
+    }
 
-        return {
-            event_type: type,
-            timestamp: new Date(Number(event.timestamp)).toLocaleString('default', {timeZone: 'Asia/Kuala_Lumpur'}),
-            data: data
-        }
-    }), {status: 200})
+    return NextResponse.json(response, {status: 200})
 }

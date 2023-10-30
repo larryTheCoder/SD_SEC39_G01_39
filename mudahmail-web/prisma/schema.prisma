@@ -89,6 +89,7 @@ model Mailbox {
 
 enum events_event_type {
   DOOR_STATE
+  DOOR_STATUS
   WEIGHT_STATE
   MOVEMENT_DETECTION
 }
