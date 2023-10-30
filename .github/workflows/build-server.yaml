@@ -1,9 +1,9 @@
-name: "Java Build"
+name: "Server Build"
 on: push
 
 jobs:
   build:
-    name: "Java Server Deployment"
+    name: "Server"
     runs-on: ubuntu-22.04
     if: "contains(github.event.head_commit.message, '[Build]')"
 
@@ -25,4 +25,4 @@ jobs:
           context: ./java-project
           push: true
           file: ./java-project/Dockerfile-Server
-          tags: "mrpotato101/potatobot:mudahmail"
+          tags: "mrpotato101/potatobot:server"

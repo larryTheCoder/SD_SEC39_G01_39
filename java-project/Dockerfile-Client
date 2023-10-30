@@ -1,7 +1,17 @@
-FROM arm32v7/eclipse-temurin:17-jre
+FROM arm64v8/maven AS build
+WORKDIR /home
+
+COPY client /home/app/client
+COPY rpc /home/app/rpc
+COPY server /home/app/server
+COPY pom.xml /home/app
+
+RUN mvn -f /home/app/pom.xml clean package
+
+FROM arm64v8/amazoncorretto:17
 
 WORKDIR /home
 
-COPY Client.jar /home
+COPY --from=build /home/app/client/target/Client.jar /home
 
 ENTRYPOINT ["java", "-jar", "Client.jar"]
