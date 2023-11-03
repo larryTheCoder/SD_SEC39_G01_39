@@ -40,7 +40,7 @@ export function Dashboard() {
                 setDoorStatus(
                     <div className="col-span-3">
                         <p>Locked</p>
-                        <p>{mailboxData.current_weight}kg</p>
+                        <p>{mailboxData.current_weight.toFixed(2)}kg</p>
                     </div>
                 )
             } else {

@@ -11,10 +11,6 @@ import {ChangePassword} from "@/app/dashboard/components/change-password";
 import {GeneralInformation} from "@/app/dashboard/components/general-information";
 import {Dashboard} from "@/app/dashboard/components/dashboard";
 
-const delay = (ms: number) => new Promise(
-    resolve => setTimeout(resolve, ms)
-);
-
 export default function Home() {
     const {data: session, update} = useSession();
 
