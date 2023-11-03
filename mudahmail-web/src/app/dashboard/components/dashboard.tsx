@@ -72,7 +72,7 @@ export function Dashboard() {
                             break;
                     }
                 } else {
-                    data = event.data.weight + "kg";
+                    data = event.data.weight.toFixed(2) + "kg";
                 }
 
                 return {
