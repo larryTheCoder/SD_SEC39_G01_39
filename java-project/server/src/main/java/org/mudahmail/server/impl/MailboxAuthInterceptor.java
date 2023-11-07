@@ -41,20 +41,17 @@ public class MailboxAuthInterceptor implements ServerInterceptor {
         } else {
             try {
                 String token = value.substring(BEARER_TYPE.length()).trim();
-                System.out.println("Token: " + token);
-                System.out.println("Signing key: " + JWT_SIGNING_KEY);
                 Jws<Claims> claims = parser.parseSignedClaims(token);
 
                 var payload = claims.getPayload();
                 var issuer = payload.getIssuer();
                 var tokenUse = payload.get("tre", String.class);
 
-                if ((tokenUse.equalsIgnoreCase("0") && issuer.equalsIgnoreCase(ADMIN_OAUTH_TOKEN)) || service.getDatabaseManager().getDeviceById(issuer) == null) {
+                if ((tokenUse.equalsIgnoreCase("0") && issuer.equalsIgnoreCase(ADMIN_OAUTH_TOKEN)) || service.getDatabaseManager().getDeviceById(issuer) != null) {
                     Context ctx = Context.current().withValue(USER_IDENTITY, claims.getPayload().getSubject());
                     return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 status = Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
             }
         }
