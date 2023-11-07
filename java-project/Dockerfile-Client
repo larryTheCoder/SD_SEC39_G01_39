@@ -31,4 +31,6 @@ WORKDIR /home
 COPY --from=builder /usr/local /usr/local
 COPY --from=binaries /home/app/client/target/Client.jar /home
 
+RUN cp -r /usr/local/lib/* /lib
+
 ENTRYPOINT ["java", "-jar", "Client.jar"]
