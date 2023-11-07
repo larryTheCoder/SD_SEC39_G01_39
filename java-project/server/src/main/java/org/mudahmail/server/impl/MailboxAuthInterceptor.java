@@ -54,6 +54,7 @@ public class MailboxAuthInterceptor implements ServerInterceptor {
                     return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 status = Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
             }
         }
