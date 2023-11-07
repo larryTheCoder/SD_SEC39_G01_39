@@ -9,7 +9,7 @@ COPY pom.xml /home/app
 RUN mvn -f /home/app/pom.xml clean package -pl client -am
 
 # Based on Alpine, a tiny linux distribution
-FROM alpine as builder
+FROM alpine:3.17 as builder
 # Install basic package to compile source code
 RUN apk add alpine-sdk
 # Follow the install guide from creator of pigpio, http://abyz.me.uk/rpi/pigpio/download.html
@@ -23,7 +23,7 @@ RUN wget --output-document=download.zip https://github.com/joan2937/pigpio/archi
     && make \
     && make install
 
-FROM arm64v8/amazoncorretto:17-alpine
+FROM arm64v8/amazoncorretto:17-alpine3.17
 
 WORKDIR /home
 
