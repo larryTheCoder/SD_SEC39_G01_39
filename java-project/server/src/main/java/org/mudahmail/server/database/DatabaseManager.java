@@ -46,8 +46,8 @@ public class DatabaseManager {
         return getEntityManager().find(MailboxEntity.class, id);
     }
 
-    public void updateNotification(NotificationRequest request) {
-        var device = getDeviceById(request.getRegistrationId());
+    public void updateNotification(String clientId, NotificationRequest request) {
+        var device = getDeviceById(clientId);
 
         try (var session = getSessionFactory().getCurrentSession()) {
             EventsEntity event = new EventsEntity();
@@ -56,7 +56,6 @@ public class DatabaseManager {
                 case DOOR_STATE -> event.setEventType(EventsEntity.EventTypeEntity.DOOR_STATE);
                 case DOOR_STATUS -> event.setEventType(EventsEntity.EventTypeEntity.DOOR_STATUS);
                 case WEIGHT_STATE -> event.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE);
-                case MOVEMENT_DETECTION -> event.setEventType(EventsEntity.EventTypeEntity.MOVEMENT_DETECTION);
             }
             event.setJsonData(request.getData());
             event.setTimestamp(request.getTimestamp());

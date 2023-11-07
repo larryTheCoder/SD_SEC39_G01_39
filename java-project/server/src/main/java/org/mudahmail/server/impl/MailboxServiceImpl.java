@@ -95,7 +95,7 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
                 }
 
                 if (request.getType() != RPC_LAZY_STARTUP) {
-                    service.getDatabaseManager().updateNotification(request);
+                    service.getDatabaseManager().updateNotification(clientId, request);
                 }
             }
 
