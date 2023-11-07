@@ -23,7 +23,7 @@ public class FingerprintAdapter implements Runnable {
     public FingerprintAdapter(MailboxClient client) {
         this.client = client;
 
-        this.sensor = new AdafruitSensor("/dev/ttyUSB0");
+        this.sensor = new AdafruitSensor("/dev/ttyAMA3");
         this.sensor.connect();
 
         currentSize = sensor.getTemplateCount();

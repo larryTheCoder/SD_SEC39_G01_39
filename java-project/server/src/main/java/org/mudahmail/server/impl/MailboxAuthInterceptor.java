@@ -41,6 +41,8 @@ public class MailboxAuthInterceptor implements ServerInterceptor {
         } else {
             try {
                 String token = value.substring(BEARER_TYPE.length()).trim();
+                System.out.println("Token: " + token);
+                System.out.println("Signing key: " + JWT_SIGNING_KEY);
                 Jws<Claims> claims = parser.parseSignedClaims(token);
 
                 var payload = claims.getPayload();
