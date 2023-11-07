@@ -1,4 +1,4 @@
-FROM arm64v8/maven:3-amazoncorretto-17 AS build
+FROM arm64v8/maven:3-amazoncorretto-17 AS java_build
 WORKDIR /home
 
 COPY client /home/app/client
@@ -8,8 +8,8 @@ COPY pom.xml /home/app
 
 RUN mvn -f /home/app/pom.xml clean package -pl client -am
 
-FROM arm64v8/amazoncorretto:17-alpine
-
+# Based on Alpine, a tiny linux distribution
+FROM alpine as builder
 # Install basic package to compile source code
 RUN apk add alpine-sdk
 # Follow the install guide from creator of pigpio, http://abyz.me.uk/rpi/pigpio/download.html
@@ -23,8 +23,11 @@ RUN wget --output-document=download.zip https://github.com/joan2937/pigpio/archi
     && make \
     && make install
 
+FROM arm64v8/amazoncorretto:17-alpine
+
 WORKDIR /home
 
-COPY --from=build /home/app/client/target/Client.jar /home
+COPY --from=builder /usr/local /usr/local
+COPY --from=java_build /home/app/client/target/Client.jar /home
 
 ENTRYPOINT ["java", "-jar", "Client.jar"]
