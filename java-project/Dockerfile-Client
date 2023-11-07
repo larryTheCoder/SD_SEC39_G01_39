@@ -8,8 +8,8 @@ COPY pom.xml /home/app
 
 RUN mvn -f /home/app/pom.xml clean package -pl client -am
 
-# Based on Alpine, a tiny linux distribution
-FROM alpine:3.17 as builder
+FROM arm64v8/amazoncorretto:17-alpine
+
 # Install basic package to compile source code
 RUN apk add alpine-sdk
 # Follow the install guide from creator of pigpio, http://abyz.me.uk/rpi/pigpio/download.html
@@ -22,8 +22,6 @@ RUN wget --output-document=download.zip https://github.com/joan2937/pigpio/archi
     && sed -i -e 's/ldconfig/echo ldconfig disabled/g' Makefile \
     && make \
     && make install
-
-FROM arm64v8/amazoncorretto:17-alpine3.17
 
 WORKDIR /home
 
