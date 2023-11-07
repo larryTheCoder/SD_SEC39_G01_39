@@ -48,7 +48,7 @@ public class MailboxAuthInterceptor implements ServerInterceptor {
                 var tokenUse = payload.get("tre", String.class);
 
                 if ((tokenUse.equalsIgnoreCase("0") && issuer.equalsIgnoreCase(ADMIN_OAUTH_TOKEN)) || service.getDatabaseManager().getDeviceById(issuer) != null) {
-                    Context ctx = Context.current().withValue(USER_IDENTITY, claims.getPayload().getSubject());
+                    Context ctx = Context.current().withValue(USER_IDENTITY, issuer);
                     return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 }
             } catch (Exception e) {
