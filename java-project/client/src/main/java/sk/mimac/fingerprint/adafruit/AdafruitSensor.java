@@ -160,6 +160,20 @@ public class AdafruitSensor implements FingerprintSensor {
         }
     }
 
+    public int getTemplateCount() throws FingerprintException {
+        writePacket(FINGERPRINT_COMMANDPACKET, new byte[]{FINGERPRINT_TEMPLATECOUNT});
+        byte[] reply = getReply();
+        if (reply[0] != FINGERPRINT_ACKPACKET && reply[1] != FINGERPRINT_OK) {
+            throw new FingerprintException("Got wrong data from fingerprint sensor: " + bytesToHex(reply), "sensor.bad.data");
+        }
+
+        int templateCount = reply[2] & 0xFF;
+        templateCount <<= 8;
+        templateCount |= reply[3] & 0xFF;
+
+        return templateCount;
+    }
+
     @Override
     public SensorParameters readParameters() throws FingerprintException {
         writePacket(FINGERPRINT_COMMANDPACKET, new byte[]{FINGERPRINT_READ_SYS_PARAM});

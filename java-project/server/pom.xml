@@ -25,6 +25,7 @@
         <jwt.version>4.4.0</jwt.version>
         <sentry.version>6.25.2</sentry.version>
         <slf4j.version>2.0.7</slf4j.version>
+        <jjwt.version>0.12.3</jjwt.version>
     </properties>
 
     <dependencies>
@@ -60,11 +61,11 @@
             <artifactId>mariadb-java-client</artifactId>
             <version>${mariadb-client.version}</version>
         </dependency>
-        <!-- dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>

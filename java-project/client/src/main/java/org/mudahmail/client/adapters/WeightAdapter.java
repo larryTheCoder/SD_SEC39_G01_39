@@ -9,6 +9,8 @@ import org.mudahmail.client.MailboxClient;
 import org.mudahmail.client.scheduler.ServerTaskExecutor;
 import org.mudahmail.client.utils.Constants;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +27,8 @@ public class WeightAdapter implements Runnable {
     private int gain = 64;
 
     public long emptyValue = 8565611;
-    public double emptyWeight = 0.0d;
     public long calibrationValue = 9145891;
+    public double emptyWeight = 0.0d;
     public double calibrationWeight = 0.240d;
 
     public double weight = 0.0d;
@@ -56,7 +58,7 @@ public class WeightAdapter implements Runnable {
 
         setGain(gain);
 
-        ServerTaskExecutor.scheduleRepeating(this, 1, 1, TimeUnit.SECONDS, true);
+        ServerTaskExecutor.scheduleRepeating(this, 250, 250, TimeUnit.MILLISECONDS);
     }
 
     public void read() {
@@ -107,19 +109,48 @@ public class WeightAdapter implements Runnable {
 
     @Override
     public void run() {
-        double totalRuns = 0.0;
+        List<Double> data = new ArrayList<>();
 
-        int averageTest = 10;
+        int averageTest = 5;
         for (int i = 0; i < averageTest; i++) {
             read();
 
-            totalRuns += weight;
+            data.add(weight);
         }
 
-        double averageWeight = Math.max(totalRuns / averageTest, 0.0);
+        // Define a threshold for outliers (you can adjust this)
+        double zScoreThreshold = 2.0;
+
+        // Calculate the mean and standard deviation
+        double mean = calculateMean(data);
+        double stdDev = calculateStandardDeviation(data, mean);
+
+        // Identify and remove outliers
+        List<Double> cleanedData = new ArrayList<>();
+        for (double value : data) {
+            double zScore = (value - mean) / stdDev;
+
+            if (Math.abs(zScore) <= zScoreThreshold) {
+                cleanedData.add(value);
+            }
+        }
+
+        double averageWeight = calculateAverage(cleanedData);
+
+        // Do not take the value
+        if (averageWeight > 1.5) {
+            return;
+        }
+
+        // Wait for a few seconds for the next unlock
+        if (client.getRelayAdapter().getLastUnlocked() < 10) {
+            return;
+        }
 
         DecimalFormat df = new DecimalFormat("#.####");
         df.setRoundingMode(RoundingMode.CEILING);
+
+        log.info("Weight: {}", df.format(averageWeight));
 
         // Do locking mechanism.
         if (averageWeight > MINIMUM_WEIGHT) {
@@ -130,11 +161,38 @@ public class WeightAdapter implements Runnable {
                     client.getRelayAdapter().lockDevice();
                     client.getEventHandler().sendEventWeight(averageWeight);
 
-                    delayWait = 30;
+                    delayWait = 5;
                 }
             }
         } else {
-            delayWait = 10;
+            delayWait = 5;
         }
+    }
+
+    // Function to calculate the mean of a dataset
+    public static double calculateMean(List<Double> data) {
+        double sum = 0;
+        for (double value : data) {
+            sum += value;
+        }
+        return sum / data.size();
+    }
+
+    // Function to calculate the standard deviation of a dataset
+    public static double calculateStandardDeviation(List<Double> data, double mean) {
+        double sumSquaredDifferences = 0;
+        for (double value : data) {
+            double difference = value - mean;
+            sumSquaredDifferences += difference * difference;
+        }
+        return Math.sqrt(sumSquaredDifferences / (data.size() - 1));
+    }
+
+    public static double calculateAverage(List<Double> data) {
+        double sum = 0;
+        for (double value : data) {
+            sum += value;
+        }
+        return sum / data.size();
     }
 }

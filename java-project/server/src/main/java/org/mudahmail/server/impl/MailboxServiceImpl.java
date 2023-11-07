@@ -8,7 +8,6 @@ import lombok.extern.log4j.Log4j2;
 import org.mudahmail.rpc.MailboxGrpc;
 import org.mudahmail.rpc.NotificationRequest;
 import org.mudahmail.rpc.NotificationType;
-import org.mudahmail.rpc.RegistrationRequest;
 import org.mudahmail.server.Service;
 import org.mudahmail.server.models.EventsEntity;
 
@@ -40,7 +39,6 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
 
             NotificationType type = null;
             switch (event) {
-                case MOVEMENT_DETECTION -> type = MOVEMENT_DETECTION;
                 case DOOR_STATE -> type = DOOR_STATE;
                 case DOOR_STATUS -> type = DOOR_STATUS;
                 case WEIGHT_STATE -> type = WEIGHT_STATE;
@@ -63,7 +61,9 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
 
     @Override
     public void testEventListener(NotificationRequest request, StreamObserver<Empty> responseObserver) {
-        var listener = activeNotifications.get(request.getRegistrationId());
+        String clientId = MailboxAuthInterceptor.USER_IDENTITY.get();
+
+        var listener = activeNotifications.get(clientId);
 
         if (listener == null) {
             responseObserver.onError(Status.NOT_FOUND.withDescription("A stream listener with that id is not found.").asRuntimeException());
@@ -76,41 +76,26 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
     }
 
     @Override
-    public void startAuthHandler(RegistrationRequest request, StreamObserver<RegistrationRequest> responseObserver) {
-        var device = service.getDatabaseManager().getDeviceById(request.getRegistrationId());
-        var response = RegistrationRequest.newBuilder()
-                .setRegistered(device != null)
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-
-    @Override
     public StreamObserver<NotificationRequest> startEventListener(StreamObserver<NotificationRequest> listener) {
+        String clientId = MailboxAuthInterceptor.USER_IDENTITY.get();
+        log.info("Client with uuid: {} is connected", clientId);
+
         NotificationRequest request = NotificationRequest.newBuilder()
-                .setType(NotificationType.REQUEST_HELLO)
+                .setType(RPC_LAZY_STARTUP)
                 .setTimestamp(System.currentTimeMillis())
                 .build();
 
         listener.onNext(request);
 
         return new StreamObserver<>() {
-            private String clientId = null;
-
             @Override
             public void onNext(NotificationRequest request) {
-                final String id = request.getRegistrationId();
-
-                if (!activeNotifications.containsKey(clientId = id)) {
+                if (!activeNotifications.containsKey(clientId)) {
                     activeNotifications.put(clientId, listener);
                 }
 
-                // Process notification if it is not a REQUEST_HELLO type.
-                if (request.getType() != REQUEST_HELLO) {
+                if (request.getType() != RPC_LAZY_STARTUP) {
                     service.getDatabaseManager().updateNotification(request);
-                } else {
-                    log.info("Hello! {}", clientId);
                 }
             }
 

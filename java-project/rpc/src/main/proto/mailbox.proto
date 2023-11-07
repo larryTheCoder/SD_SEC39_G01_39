@@ -9,29 +9,49 @@ import "google/protobuf/empty.proto";
 
 enum NotificationType {
   DOOR_STATE = 0;
-  DOOR_STATUS = 4;
-  WEIGHT_STATE = 1;
-  MOVEMENT_DETECTION = 2;
-  REQUEST_HELLO = 3;
-}
+  DOOR_STATUS = 1;
+  WEIGHT_STATE = 2;
 
-// Registration process
-message RegistrationRequest {
-  string registrationId = 1;    // Client
-  bool unregistered = 2;        // Client
-  bool registered = 3;          // Server
+  BIOMETRICS_DELETE = 3;
+  BIOMETRICS_ADD = 4;
+
+  RPC_LAZY_STARTUP = 5;
 }
 
 message NotificationRequest {
-  string registrationId = 1;
-  NotificationType type = 2;
+  NotificationType type = 1;
+  int64 timestamp = 2;
   string data = 3;
-  int64 timestamp = 4;
+  bytes rawData = 4;
 }
 
-service Mailbox {
-  rpc startAuthHandler(RegistrationRequest) returns (RegistrationRequest);
-  rpc startEventListener(stream NotificationRequest) returns (stream NotificationRequest);
+message DoorRequestResponse {
+  int64 timestamp = 1;
+  bool success = 2;
+}
 
+message BiometricsDeletionResponse {
+  int64 biometricId = 1;
+  bool success = 2;
+}
+
+message BiometricsInfoResponse {
+  int64 biometricId = 1;
+  bytes biometricData = 2;
+  int64 timestamp = 3;
+}
+
+// Headers metadata:
+// - Bearer: REQUIRED
+// - Device: {uuid} [REQUIRED FOR SERVER]
+
+service Mailbox {
+  rpc startEventListener(stream NotificationRequest) returns (stream NotificationRequest);
   rpc testEventListener(NotificationRequest) returns (google.protobuf.Empty);
+}
+
+service Server {
+  rpc openSecurityDoor(google.protobuf.Empty) returns (DoorRequestResponse);
+  rpc getBiometricList(google.protobuf.Empty) returns (stream BiometricsInfoResponse);
+  rpc deleteBiometricId(google.protobuf.Empty) returns (BiometricsDeletionResponse);
 }

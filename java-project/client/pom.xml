@@ -96,6 +96,12 @@
             <artifactId>nrjavaserial</artifactId>
             <version>5.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.3.0.Final</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

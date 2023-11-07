@@ -6,7 +6,7 @@ import lombok.extern.log4j.Log4j2;
 public class Bootstrap {
     public static void main(String[] args) {
         try {
-            (new MailboxClient()).start(data -> {});
+            new MailboxClient();
         } catch (Exception throwing) {
             log.throwing(throwing);
         }

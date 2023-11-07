@@ -67,6 +67,18 @@ public interface FingerprintSensor extends Closeable {
     void saveStoredModel(int number) throws FingerprintException;
 
     /**
+     * Get fingerprint model which was created by
+     * {@link #createModel() createModel} method to sensor's internal memory.
+     *
+     * @param number position in sensor's internal memory
+     * @return model of fingerprint or null if no fingerprint is placed on
+     * sensor
+     * @throws FingerprintException if there is problem with communication to
+     * sensor
+     */
+    int getTemplateCount() throws FingerprintException;
+
+    /**
      * Search sensor's internal memory for match with finger on which
      * {@link #hasFingerprint() hasFingerprint} was called.
      *
