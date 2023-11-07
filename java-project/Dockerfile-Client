@@ -1,4 +1,7 @@
-FROM arm64v8/maven:3-amazoncorretto-17 AS java_build
+# Note: grpc has some problems building against musl-based operating systems.
+#       I have to build pigio on ubuntu/debian based systems in order to make it work
+#       with pi4j library.
+FROM arm64v8/maven:3-eclipse-temurin-17-focal AS build
 WORKDIR /home
 
 COPY client /home/app/client
@@ -8,26 +11,45 @@ COPY pom.xml /home/app
 
 RUN mvn -f /home/app/pom.xml clean package -pl client -am
 
-# Based on Alpine, a tiny linux distribution
-FROM alpine as builder
-# Install basic package to compile source code
-RUN apk add alpine-sdk
-# Follow the install guide from creator of pigpio, http://abyz.me.uk/rpi/pigpio/download.html
-RUN wget --output-document=download.zip https://github.com/joan2937/pigpio/archive/master.zip \
-    # Downloaded content is placed inside specific folder to not be depended of branch naming from repo
-    && mkdir download \
-    && unzip -d download download.zip \
-    && cd /download/* \
-    # Fix for compiling on Alpine, https://github.com/joan2937/pigpio/issues/107
-    && sed -i -e 's/ldconfig/echo ldconfig disabled/g' Makefile \
-    && make \
-    && make install
+FROM devdotnetorg/libgpiod:2.0.2-ubuntu
 
-FROM arm64v8/amazoncorretto:17-alpine
+ARG version=17.0.9.8-1
+# In addition to installing the Amazon corretto, we also install
+# fontconfig. The folks who manage the docker hub's
+# official image library have found that font management
+# is a common usecase, and painpoint, and have
+# recommended that Java images include font support.
+#
+# See:
+#  https://github.com/docker-library/official-images/blob/master/test/tests/java-uimanager-font/container.java
+#
+# Slim:
+#   JLink is used (retaining all modules) to create a slimmer version of the JDK excluding man-pages, header files and debugging symbols - saving ~113MB.
+RUN set -ux \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl ca-certificates gnupg software-properties-common fontconfig \
+    && curl -fL https://apt.corretto.aws/corretto.key | apt-key add - \
+    && add-apt-repository 'deb https://apt.corretto.aws stable main' \
+    && mkdir -p /usr/share/man/man1 \
+    && apt-get update \
+    && apt-get install -y java-17-amazon-corretto-jdk=1:$version binutils \
+    && jlink --add-modules "$(java --list-modules | sed -e 's/@[0-9].*$/,/' | tr -d \\n)" --no-man-pages --no-header-files --strip-debug --output /opt/corretto-slim \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+            curl gnupg software-properties-common binutils java-17-amazon-corretto-jdk=1:$version \
+    && mkdir -p /usr/lib/jvm \
+    && mv /opt/corretto-slim /usr/lib/jvm/java-17-amazon-corretto \
+    && jdk_tools="java keytool rmid rmiregistry javac jaotc jlink jmod jhsdb jar jarsigner javadoc javap jcmd jconsole jdb jdeps jdeprscan jimage jinfo jmap jps jrunscript jshell jstack jstat jstatd serialver" \
+    && priority=$(echo "1${version}" | sed "s/\(\.\|-\)//g") \
+    && for i in ${jdk_tools}; do \
+          update-alternatives --install /usr/bin/$i $i /usr/lib/jvm/java-17-amazon-corretto/bin/$i ${priority}; \
+       done
+
+ENV LANG C.UTF-8
+ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
 
 WORKDIR /home
 
-COPY --from=builder /usr/local /usr/local
-COPY --from=java_build /home/app/client/target/Client.jar /home
+COPY --from=build /home/app/client/target/Client.jar /home
 
 ENTRYPOINT ["java", "-jar", "Client.jar"]
