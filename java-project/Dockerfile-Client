@@ -21,7 +21,7 @@ RUN wget --output-document=download.zip https://github.com/joan2937/pigpio/archi
     # Fix for compiling on Alpine, https://github.com/joan2937/pigpio/issues/107
     && sed -i -e 's/ldconfig/echo ldconfig disabled/g' Makefile \
     && make \
-    && make install \
+    && make install
 
 FROM arm64v8/amazoncorretto:17-alpine
 
