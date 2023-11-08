@@ -59,6 +59,7 @@ service Mailbox {
 }
 
 service Server {
+  // getMailboxStates
   rpc setDoorLockStatus(DoorLockStatusRequest) returns (DoorRequestResponse);
   rpc getBiometricList(google.protobuf.Empty) returns (stream BiometricsInfoResponse);
   rpc deleteBiometricId(google.protobuf.Empty) returns (BiometricsDeletionResponse);

@@ -1,5 +1,7 @@
 package org.mudahmail.server.database;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -11,12 +13,15 @@ import org.mudahmail.server.models.MailboxEntity;
 import org.mudahmail.server.storage.MailboxStorage;
 
 import java.util.EnumSet;
+import java.util.Map;
 
 import static org.mudahmail.rpc.NotificationType.*;
 
 @Log4j2(topic = "DatabaseManager")
 public class DatabaseManager {
     private static final SessionFactory sessionFactory;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
         try {
@@ -81,7 +86,19 @@ public class DatabaseManager {
             // If the box is locked, we set the locked weight instantaneously.
             if (storage.isLocked()) {
                 storage.setLockedWeight(storage.getCurrentWeight());
+
+                var event = new EventsEntity();
+                event.setDeviceAuthToken(device.getAuthToken());
+                event.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE_UPDATE);
+                event.setJsonData(objectMapper.writeValueAsString(Map.of("weight", storage.getCurrentWeight())));
+                event.setTimestamp(request.getTimestamp());
+
+                session.beginTransaction();
+                session.persist(event);
+                session.getTransaction().commit();
             }
+        } catch (JsonProcessingException e) {
+            log.error("Unhandled exception: ", e);
         }
     }
 }
