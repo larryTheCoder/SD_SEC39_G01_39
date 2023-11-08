@@ -28,6 +28,8 @@ public class FingerprintAdapter implements Runnable {
 
         currentSize = sensor.getTemplateCount();
 
+        log.info("Thumbprint registered: " + currentSize);
+
         ServerTaskExecutor.scheduleRepeating(this, 1, 1, TimeUnit.SECONDS);
     }
 
@@ -49,44 +51,40 @@ public class FingerprintAdapter implements Runnable {
     }
 
     private void onRun() throws FingerprintException, InterruptedException {
-        if (client.getRelayAdapter().isLocked()) {
-            if (sensor.hasFingerprint()) {
+        if (sensor.hasFingerprint()) {
+            if (registration.compareAndExchange(true, false)) { // New fingerprint
+                while (sensor.hasFingerprint()) {
+                    Thread.sleep(50);
+                }
+
+                client.getBuzzerAdapter().addBuzzerQueue(List.of(500L));
+
+                // ... and put it back on (model has to be calculated from two images)
+                byte[] model = null;
+                while ((model = sensor.createModel()) == null) {
+                    Thread.sleep(50);
+                }
+
+                if (++currentSize > 127) {
+                    currentSize = 1;
+                }
+
+                sensor.saveStoredModel(currentSize);
+
+                client.getBuzzerAdapter().addBuzzerQueue(List.of(500L, 250L));
+            } else if (client.getRelayAdapter().isLocked()) {
                 // Finger is on sensor
                 Integer fingerId = sensor.searchFingerprint();
                 if (fingerId != null) { // Already known fingerprint
-                    log.info("Scanned fingerprint with ID " + fingerId);
-
                     client.getRelayAdapter().unlockDevice();
                 } else {
-                    log.info("No Match");
-
-                    client.getBuzzerAdapter().addBuzzerQueue(List.of(350L, 350L, 350L, 350L, 350L));
+                    client.getBuzzerAdapter().addBuzzerQueue(List.of(350L, 350L, 350L, 350L));
 
                     Thread.sleep(TimeUnit.SECONDS.toMillis(5));
                 }
+            } else {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(5));
             }
-        } else if (sensor.hasFingerprint() && registration.compareAndExchange(true, false)) { // New fingerprint
-            client.getBuzzerAdapter().addBuzzerQueue(List.of(350L, 150L));
-
-            while (sensor.hasFingerprint()) {
-                Thread.sleep(50);
-            }
-
-            client.getBuzzerAdapter().addBuzzerQueue(List.of(150L, 350L));
-
-            // ... and put it back on (model has to be calculated from two images)
-            byte[] model = null;
-            while ((model = sensor.createModel()) == null) {
-                Thread.sleep(50);
-            }
-
-            if (++currentSize > 127) {
-                currentSize = 1;
-            }
-
-            sensor.saveStoredModel(currentSize);
-
-            client.getBuzzerAdapter().addBuzzerQueue(List.of(350L, 150L, 150L, 350L));
         }
     }
 }

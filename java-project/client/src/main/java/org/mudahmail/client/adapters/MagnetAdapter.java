@@ -8,6 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import org.mudahmail.client.MailboxClient;
 import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.utils.Constants;
+import org.mudahmail.rpc.NotificationType;
 
 @Log4j2(topic = "Magnet")
 public class MagnetAdapter {
@@ -24,9 +25,9 @@ public class MagnetAdapter {
 
         button.addListener(event -> {
             if (event.state() == DigitalState.LOW) {
-                client.getEventHandler().sendEventDoorStatus(EventHandler.DoorEventState.OPEN);
+                client.getEventHandler().sendEventNotification(NotificationType.DOOR_STATE_OPEN);
             } else {
-                client.getEventHandler().sendEventDoorStatus(EventHandler.DoorEventState.CLOSE);
+                client.getEventHandler().sendEventNotification(NotificationType.DOOR_STATE_CLOSED);
             }
         });
     }

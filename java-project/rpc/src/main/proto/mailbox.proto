@@ -8,26 +8,34 @@ import "google/protobuf/empty.proto";
 // for a use-case where a stream of messages are needed to be sent over simultaneously.
 
 enum NotificationType {
-  DOOR_STATE = 0;
-  DOOR_STATUS = 1;
-  WEIGHT_STATE = 2;
+  DOOR_STATE_OPEN = 0;
+  DOOR_STATE_CLOSED = 1;
+  DOOR_LOCKED = 3;
+  DOOR_UNLOCKED = 4;
+  WEIGHT_STATE_UPDATE = 5;
 
-  BIOMETRICS_DELETE = 3;
-  BIOMETRICS_ADD = 4;
+  BIOMETRICS_DELETE = 6;
+  BIOMETRICS_ADD = 7;
 
-  RPC_LAZY_STARTUP = 5;
+  RPC_LAZY_STARTUP = 8;
 }
 
 message NotificationRequest {
   NotificationType type = 1;
   int64 timestamp = 2;
-  string data = 3;
-  bytes rawData = 4;
+  string dataString = 3;
+  double dataDouble = 4;
+  int64 dataInteger = 5;
+  bytes rawData = 6;
 }
 
 message DoorRequestResponse {
   int64 timestamp = 1;
   bool success = 2;
+}
+
+message DoorLockStatusRequest {
+  bool toggleLock = 1;
 }
 
 message BiometricsDeletionResponse {
@@ -51,7 +59,7 @@ service Mailbox {
 }
 
 service Server {
-  rpc openSecurityDoor(google.protobuf.Empty) returns (DoorRequestResponse);
+  rpc setDoorLockStatus(DoorLockStatusRequest) returns (DoorRequestResponse);
   rpc getBiometricList(google.protobuf.Empty) returns (stream BiometricsInfoResponse);
   rpc deleteBiometricId(google.protobuf.Empty) returns (BiometricsDeletionResponse);
 }

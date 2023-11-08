@@ -7,6 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.mudahmail.client.MailboxClient;
 import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.utils.Constants;
+import org.mudahmail.rpc.NotificationType;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +41,7 @@ public class RelayAdapter {
         output.high();
 
         client.getBuzzerAdapter().addBuzzerQueue(List.of(350L));
-        client.getEventHandler().sendEventDoorState(EventHandler.DoorEventState.UNLOCKED);
+        client.getEventHandler().sendEventNotification(NotificationType.DOOR_UNLOCKED);
 
         lastUnlocked = System.currentTimeMillis();
     }
@@ -51,7 +52,7 @@ public class RelayAdapter {
         output.low();
 
         client.getBuzzerAdapter().addBuzzerQueue(List.of(150L, 150L, 150L));
-        client.getEventHandler().sendEventDoorState(EventHandler.DoorEventState.LOCK);
+        client.getEventHandler().sendEventNotification(NotificationType.DOOR_LOCKED);
     }
 
     /**

@@ -8,11 +8,12 @@ import lombok.extern.log4j.Log4j2;
 import org.mudahmail.client.MailboxClient;
 import org.mudahmail.client.scheduler.ServerTaskExecutor;
 import org.mudahmail.client.utils.Constants;
+import org.mudahmail.rpc.NotificationType;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2(topic = "WeightAdapter")
@@ -58,7 +59,7 @@ public class WeightAdapter implements Runnable {
 
         setGain(gain);
 
-        ServerTaskExecutor.scheduleRepeating(this, 250, 250, TimeUnit.MILLISECONDS);
+        ServerTaskExecutor.scheduleRepeating(this, 1, 1, TimeUnit.SECONDS);
     }
 
     public void read() {
@@ -147,10 +148,7 @@ public class WeightAdapter implements Runnable {
             return;
         }
 
-        DecimalFormat df = new DecimalFormat("#.####");
-        df.setRoundingMode(RoundingMode.CEILING);
-
-        log.info("Weight: {}", df.format(averageWeight));
+        client.getEventHandler().sendEventNotification(NotificationType.WEIGHT_STATE_UPDATE, averageWeight);
 
         // Do locking mechanism.
         if (averageWeight > MINIMUM_WEIGHT) {
@@ -159,7 +157,6 @@ public class WeightAdapter implements Runnable {
 
                 if (delayWait == 0) {
                     client.getRelayAdapter().lockDevice();
-                    client.getEventHandler().sendEventWeight(averageWeight);
 
                     delayWait = 5;
                 }

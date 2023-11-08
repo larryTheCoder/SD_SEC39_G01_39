@@ -45,7 +45,7 @@ public class MailboxClient {
         relayAdapter = new RelayAdapter(this, pi4j);
         weightAdapter = new WeightAdapter(this, pi4j);
         fingerprintAdapter = new FingerprintAdapter(this);
-        statusAdapter = new StatusAdapter(pi4j);
+        statusAdapter = new StatusAdapter(this, pi4j);
         buzzerAdapter = new BuzzerAdapter(this, pi4j);
         buzzerAdapter.addBuzzerQueue(List.of(1000L));
 
