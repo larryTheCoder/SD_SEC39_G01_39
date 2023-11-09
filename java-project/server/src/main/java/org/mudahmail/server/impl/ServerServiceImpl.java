@@ -18,13 +18,42 @@ public class ServerServiceImpl extends ServerGrpc.ServerImplBase {
     }
 
     @Override
+    public void getMailboxStates(MailboxStatesRequest request, StreamObserver<MailboxStatesResponse> responseObserver) {
+        MailboxStatesResponse.Builder states = MailboxStatesResponse.newBuilder();
+
+        request.getClientUuidList().forEach(client -> {
+            var builder = MailboxState.newBuilder()
+                    .setDeviceUUID(client)
+                    .setOnline(false);
+
+            if (MailboxStorage.isMailboxExists(client)) {
+                var mailbox = MailboxStorage.getMailboxByUuid(client);
+
+                builder.setLockedWeight(mailbox.getLockedWeight());
+                builder.setCurrentWeight(mailbox.getCurrentWeight());
+                builder.setDoorOpen(mailbox.isDoorOpen());
+                builder.setLocked(mailbox.isLocked());
+                builder.setLastReceived(mailbox.getLastReceived());
+                builder.setOnline(mailbox.isOnline());
+            }
+
+            states.addStates(builder.build());
+        });
+
+        responseObserver.onNext(states.build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void setDoorLockStatus(DoorLockStatusRequest request, StreamObserver<DoorRequestResponse> responseObserver) {
         String targetId = MailboxAuthInterceptor.USER_AUTHORITY.get();
 
         if (targetId == null) {
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("User authority is not found.").asRuntimeException());
         } else if (!MailboxStorage.isMailboxExists(targetId)) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Device is not registered or is offline").asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.withDescription("Device is not registered").asRuntimeException());
+        } else if (!MailboxStorage.getMailboxByUuid(targetId).isOnline()) {
+            responseObserver.onError(Status.NOT_FOUND.withDescription("Device is currently offline").asRuntimeException());
         } else {
             service.sendNotificationEmpty(targetId, request.getToggleLock() ? NotificationType.DOOR_LOCKED : NotificationType.DOOR_UNLOCKED);
 

@@ -6,6 +6,9 @@ import "google/protobuf/empty.proto";
 
 // Proposal: A notification to the server requires a long grpc calls, a bi-di is suitable
 // for a use-case where a stream of messages are needed to be sent over simultaneously.
+// Headers metadata:
+// - Bearer: REQUIRED
+// - Device: {uuid} [REQUIRED FOR SERVER]
 
 enum NotificationType {
   DOOR_STATE_OPEN = 0;
@@ -27,6 +30,7 @@ message NotificationRequest {
   double dataDouble = 4;
   int64 dataInteger = 5;
   bytes rawData = 6;
+  bool notification = 7;
 }
 
 message DoorRequestResponse {
@@ -49,9 +53,23 @@ message BiometricsInfoResponse {
   int64 timestamp = 3;
 }
 
-// Headers metadata:
-// - Bearer: REQUIRED
-// - Device: {uuid} [REQUIRED FOR SERVER]
+message MailboxStatesRequest {
+  repeated string clientUuid = 1;
+}
+
+message MailboxStatesResponse {
+  repeated MailboxState states = 1;
+}
+
+message MailboxState {
+  string deviceUUID = 1;
+  bool locked = 2;
+  bool doorOpen = 3;
+  bool online = 4;
+  double lockedWeight = 5;
+  double currentWeight = 6;
+  int64 lastReceived = 7;
+}
 
 service Mailbox {
   rpc startEventListener(stream NotificationRequest) returns (stream NotificationRequest);
@@ -59,7 +77,7 @@ service Mailbox {
 }
 
 service Server {
-  // getMailboxStates
+  rpc getMailboxStates(MailboxStatesRequest) returns (MailboxStatesResponse);
   rpc setDoorLockStatus(DoorLockStatusRequest) returns (DoorRequestResponse);
   rpc getBiometricList(google.protobuf.Empty) returns (stream BiometricsInfoResponse);
   rpc deleteBiometricId(google.protobuf.Empty) returns (BiometricsDeletionResponse);

@@ -6,12 +6,13 @@ import com.pi4j.io.gpio.digital.DigitalState;
 import com.pi4j.io.gpio.digital.PullResistance;
 import lombok.extern.log4j.Log4j2;
 import org.mudahmail.client.MailboxClient;
-import org.mudahmail.client.module.EventHandler;
 import org.mudahmail.client.utils.Constants;
 import org.mudahmail.rpc.NotificationType;
 
 @Log4j2(topic = "Magnet")
 public class MagnetAdapter {
+    private final DigitalInput button;
+
     public MagnetAdapter(MailboxClient client, Context pi4j) {
         var buttonConfig = DigitalInput.newConfigBuilder(pi4j)
                 .id("Magnetic Sensor")
@@ -21,7 +22,7 @@ public class MagnetAdapter {
                 .debounce(3000L)
                 .provider("pigpio-digital-input");
 
-        var button = pi4j.create(buttonConfig);
+        button = pi4j.create(buttonConfig);
 
         button.addListener(event -> {
             if (event.state() == DigitalState.LOW) {
@@ -30,5 +31,9 @@ public class MagnetAdapter {
                 client.getEventHandler().sendEventNotification(NotificationType.DOOR_STATE_CLOSED);
             }
         });
+    }
+
+    public boolean isOpen() {
+        return button.isLow();
     }
 }

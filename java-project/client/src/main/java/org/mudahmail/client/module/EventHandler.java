@@ -17,6 +17,7 @@ import org.mudahmail.rpc.NotificationType;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handle events awaiting to be sent to the grpc server. Does handle reconnection and other
@@ -39,7 +40,6 @@ public class EventHandler {
 
         channel = NettyChannelBuilder
                 .forTarget(Constants.SERVER_ADDRESS)
-                .intercept()
                 .enableRetry()
                 .useTransportSecurity()
                 .keepAliveTime(30, TimeUnit.SECONDS)
@@ -89,30 +89,45 @@ public class EventHandler {
         }
     }
 
+    public void sendStartupNotification() {
+        NotificationRequest request = NotificationRequest.newBuilder()
+                .setType(NotificationType.RPC_LAZY_STARTUP)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+
+        eventListener.onNext(request);
+
+        while ((request = pendingNotifications.poll()) != null) {
+            eventListener.onNext(request);
+        }
+
+        request = NotificationRequest.newBuilder()
+                .setType(client.getRelayAdapter().isLocked() ? NotificationType.DOOR_LOCKED : NotificationType.DOOR_UNLOCKED)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+
+        eventListener.onNext(request);
+
+        request = NotificationRequest.newBuilder()
+                .setType(client.getMagnetAdapter().isOpen() ? NotificationType.DOOR_STATE_OPEN : NotificationType.DOOR_STATE_CLOSED)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+
+        eventListener.onNext(request);
+
+        client.getStatusAdapter().setConnected(true);
+    }
+
     private void startEventListeners() {
         eventListener = asyncStub.startEventListener(new StreamObserver<>() {
-            private boolean firstConnection = true;
+            private final AtomicBoolean firstConnection = new AtomicBoolean(true);
 
             @Override
             public void onNext(NotificationRequest value) {
-                if (firstConnection) {
+                if (firstConnection.compareAndSet(true, false)) {
                     log.info("Connection to the server has been established.");
 
-                    NotificationRequest request = NotificationRequest.newBuilder()
-                            .setType(NotificationType.RPC_LAZY_STARTUP)
-                            .setTimestamp(System.currentTimeMillis())
-                            .build();
-
-                    eventListener.onNext(request);
-
-                    NotificationRequest notification;
-                    while ((notification = pendingNotifications.poll()) != null) {
-                        eventListener.onNext(notification);
-                    }
-
-                    client.getStatusAdapter().setConnected(true);
-
-                    firstConnection = false;
+                    sendStartupNotification();
                 }
 
                 switch (value.getType()) {

@@ -56,8 +56,40 @@ public class DatabaseManager {
         var device = getDeviceById(clientId);
 
         try (var session = getSessionFactory().getCurrentSession()) {
+            var storage = MailboxStorage.getMailboxByUuid(clientId);
+            var wasLocked = storage.isLocked();
+
+            switch (request.getType()) {
+                case DOOR_STATE_OPEN -> storage.setDoorOpen(true);
+                case DOOR_STATE_CLOSED -> storage.setDoorOpen(false);
+                case DOOR_LOCKED -> {
+                    storage.setLocked(true);
+                    storage.setLockedWeight(storage.getCurrentWeight());
+                }
+                case DOOR_UNLOCKED -> {
+                    storage.setLocked(false);
+                    storage.setLockedWeight(0.0);
+                }
+                case WEIGHT_STATE_UPDATE -> storage.setCurrentWeight(request.getDataDouble());
+                // TODO: BIOMETRICS_DELETE, BIOMETRICS_ADD
+            }
+
+            storage.setLastReceived(System.currentTimeMillis());
+
             // Save these events into the database.
             if (EnumSet.of(DOOR_STATE_OPEN, DOOR_STATE_CLOSED, DOOR_LOCKED, DOOR_UNLOCKED).contains(request.getType())) {
+                session.beginTransaction();
+
+                if (request.getType().equals(DOOR_LOCKED)) {
+                    var weightEntity = new EventsEntity();
+                    weightEntity.setDeviceAuthToken(device.getAuthToken());
+                    weightEntity.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE_UPDATE);
+                    weightEntity.setJsonData(objectMapper.writeValueAsString(Map.of("weight", storage.getCurrentWeight())));
+                    weightEntity.setTimestamp(request.getTimestamp());
+
+                    session.persist(weightEntity);
+                }
+
                 var event = new EventsEntity();
                 event.setDeviceAuthToken(device.getAuthToken());
                 switch (request.getType()) {
@@ -68,32 +100,6 @@ public class DatabaseManager {
                 }
                 event.setTimestamp(request.getTimestamp());
 
-                session.beginTransaction();
-                session.persist(event);
-                session.getTransaction().commit();
-            }
-
-            var storage = MailboxStorage.getMailboxByUuid(clientId);
-            switch (request.getType()) {
-                case DOOR_STATE_OPEN -> storage.setDoorOpen(true);
-                case DOOR_STATE_CLOSED -> storage.setDoorOpen(false);
-                case DOOR_LOCKED -> storage.setLocked(true);
-                case DOOR_UNLOCKED -> storage.setLocked(false);
-                case WEIGHT_STATE_UPDATE -> storage.setCurrentWeight(request.getDataDouble());
-                // TODO: BIOMETRICS_DELETE, BIOMETRICS_ADD
-            }
-
-            // If the box is locked, we set the locked weight instantaneously.
-            if (storage.isLocked()) {
-                storage.setLockedWeight(storage.getCurrentWeight());
-
-                var event = new EventsEntity();
-                event.setDeviceAuthToken(device.getAuthToken());
-                event.setEventType(EventsEntity.EventTypeEntity.WEIGHT_STATE_UPDATE);
-                event.setJsonData(objectMapper.writeValueAsString(Map.of("weight", storage.getCurrentWeight())));
-                event.setTimestamp(request.getTimestamp());
-
-                session.beginTransaction();
                 session.persist(event);
                 session.getTransaction().commit();
             }

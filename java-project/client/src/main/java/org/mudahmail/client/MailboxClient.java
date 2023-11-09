@@ -32,6 +32,7 @@ public class MailboxClient {
     private final FingerprintAdapter fingerprintAdapter;
     private final StatusAdapter statusAdapter;
     private final BuzzerAdapter buzzerAdapter;
+    private final MagnetAdapter magnetAdapter;
 
     public MailboxClient() {
         log.info("Starting Backend Client (Mailbox Business Logic)");
@@ -46,11 +47,11 @@ public class MailboxClient {
         weightAdapter = new WeightAdapter(this, pi4j);
         fingerprintAdapter = new FingerprintAdapter(this);
         statusAdapter = new StatusAdapter(this, pi4j);
+        magnetAdapter = new MagnetAdapter(this, pi4j);
         buzzerAdapter = new BuzzerAdapter(this, pi4j);
         buzzerAdapter.addBuzzerQueue(List.of(1000L));
 
         new ButtonAdapter(this, pi4j);
-        new MagnetAdapter(this, pi4j);
 
         eventHandler = new EventHandler(this);
 

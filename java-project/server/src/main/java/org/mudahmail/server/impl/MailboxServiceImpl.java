@@ -1,6 +1,5 @@
 package org.mudahmail.server.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -63,14 +62,18 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
                 if (!activeNotifications.containsKey(clientId)) {
                     activeNotifications.put(clientId, listener);
 
-                    var storage = MailboxStorage.getMailboxByUuid(clientId);
+                    if (MailboxStorage.isMailboxExists(clientId)) {
+                        var storage = MailboxStorage.getMailboxByUuid(clientId);
 
-                    storage.setDeviceUUID(clientId);
-                    storage.setLockedWeight(0.0);
-                    storage.setCurrentWeight(0.0);
-                    storage.setDoorOpen(false);
-                    storage.setLocked(false);
-                    storage.setLastReceived(System.currentTimeMillis());
+                        storage.setDeviceUUID(clientId);
+                        storage.setLockedWeight(0.0);
+                        storage.setCurrentWeight(0.0);
+                        storage.setDoorOpen(false);
+                        storage.setLocked(false);
+                        storage.setLastReceived(System.currentTimeMillis());
+                    }
+
+                    MailboxStorage.getMailboxByUuid(clientId).setOnline(true);
                 }
 
                 if (request.getType() != RPC_LAZY_STARTUP) {
@@ -95,6 +98,10 @@ public class MailboxServiceImpl extends MailboxGrpc.MailboxImplBase {
             private void unregisterListener() {
                 if (clientId != null) {
                     activeNotifications.remove(clientId);
+
+                    if (MailboxStorage.isMailboxExists(clientId)) {
+                        MailboxStorage.getMailboxByUuid(clientId).setOnline(false);
+                    }
                 }
 
                 listener.onCompleted();

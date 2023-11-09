@@ -12,7 +12,8 @@ public class MailboxState {
     private String deviceUUID;
     private boolean locked;
     private boolean doorOpen;
+    private boolean online;
     private double lockedWeight;
     private double currentWeight;
-    private Long lastReceived;
+    private long lastReceived;
 }

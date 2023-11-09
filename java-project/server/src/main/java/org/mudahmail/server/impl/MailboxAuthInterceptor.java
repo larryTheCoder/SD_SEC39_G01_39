@@ -53,12 +53,8 @@ public class MailboxAuthInterceptor implements ServerInterceptor {
                 var isAuthority = tokenUse.equalsIgnoreCase("0") && issuer.equalsIgnoreCase(ADMIN_PRIVATE_TOKEN);
                 if (isAuthority) {
                     String authority = metadata.get(TARGET_CLIENT_AUTHORITY);
-                    if (authority == null) {
-                        status = Status.UNAUTHENTICATED.withDescription("Authority client is missing");
-                    } else {
-                        Context ctx = Context.current().withValue(USER_IDENTITY, issuer).withValue(USER_AUTHORITY, authority);
-                        return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
-                    }
+                    Context ctx = Context.current().withValue(USER_IDENTITY, issuer).withValue(USER_AUTHORITY, authority);
+                    return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 } else if (service.getDatabaseManager().getDeviceById(issuer) != null) {
                     Context ctx = Context.current().withValue(USER_IDENTITY, issuer);
                     return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
