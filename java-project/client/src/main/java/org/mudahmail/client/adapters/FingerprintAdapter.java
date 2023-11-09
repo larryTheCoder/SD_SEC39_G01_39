@@ -1,5 +1,7 @@
 package org.mudahmail.client.adapters;
 
+import gnu.io.NRSerialPort;
+import gnu.io.RXTXCommDriver;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.mudahmail.client.MailboxClient;
@@ -25,6 +27,11 @@ public class FingerprintAdapter implements Runnable {
 
         this.sensor = new AdafruitSensor("/dev/ttyAMA3");
         this.sensor.connect();
+
+        var ports = NRSerialPort.getAvailableSerialPorts();
+
+        log.info("Found ports:");
+        ports.forEach(log::info);
 
         currentSize = sensor.getTemplateCount();
 
