@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.mudahmail.rpc.NotificationRequest;
 import org.mudahmail.rpc.NotificationType;
 import org.mudahmail.server.Service;
+import org.mudahmail.server.scheduler.ServerTaskExecutor;
 
 import java.io.IOException;
 import java.util.Map;
@@ -46,6 +47,8 @@ public class MailboxService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        ServerTaskExecutor.scheduleRepeating(() -> getMailboxService().getActiveNotifications().forEach((key, value) -> sendNotificationEmpty(key, NotificationType.RPC_LAZY_STARTUP)), 5, 15, TimeUnit.MINUTES);
 
         log.info("GRPC Service started on port {}", port);
     }
