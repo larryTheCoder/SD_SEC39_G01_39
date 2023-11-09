@@ -5,4 +5,3 @@ import {ServerClient} from "@/common/service/mailbox.client";
 
 export const prisma = new PrismaClient()
 export const client = new Redis(REDIS_URL)
-export const service = new ServerClient()
