@@ -1,6 +1,9 @@
 import {NextRequest, NextResponse} from "next/server";
 import {getToken} from "next-auth/jwt";
 import {prisma} from "@/libs/database";
+import {client} from "@/common/service";
+import {EventData} from ".prisma/client";
+import {ADMIN_JWT_KEY} from "@/libs/config";
 
 export async function GET(
     request: NextRequest
@@ -11,54 +14,24 @@ export async function GET(
         return NextResponse.json({}, {status: 404})
     }
 
-    const userData = await prisma.userData.findFirst({
-        where: {userSnowflake: claims.id}
-    })
+    const events = await prisma.$queryRawUnsafe<EventData[]>(
+        `SELECT * FROM events WHERE device_auth_token = (SELECT device_auth_token FROM user_data WHERE user_snowflake=${claims.id}) ORDER BY timestamp DESC LIMIT 25`
+    )
 
-    if (userData === null) {
-        return NextResponse.json({}, {status: 404})
+    if (events.length == 0) {
+        return NextResponse.json({}, {status: 200})
     }
 
-    const results = await prisma.eventData.findMany({
-        take: 25,
-        where: {device_auth_token: userData.device_auth_token},
-        orderBy: {timestamp: 'desc'},
-    })
+    const deviceUuid = events[0].device_auth_token;
+    const {response: mailboxState} = await client.getMailboxStates(
+        {clientUuid: [deviceUuid as string]},
+        {timeout: 3_000, meta: {"Authorization": "Bearer " + ADMIN_JWT_KEY}}
+    )
 
-    const doorState = await prisma.eventData.findFirst({
-        where: {
-            AND: [
-                {device_auth_token: userData.device_auth_token},
-                {event_type: 'DOOR_STATE'}
-            ]
-        },
-        orderBy: {timestamp: 'desc'},
-    });
-
-    const weightState = await prisma.eventData.findFirst({
-        where: {
-            AND: [
-                {device_auth_token: userData.device_auth_token},
-                {event_type: 'WEIGHT_STATE'}
-            ]
-        },
-        orderBy: {timestamp: 'desc'},
-    });
-
-    let locked = false
-    let currentWeight = 0.0
-    if (doorState !== null && weightState !== null) {
-        let jsonData0 = JSON.parse(doorState.json_data ?? "[]")
-        let jsonData1 = JSON.parse(weightState.json_data ?? "[]")
-
-        locked = jsonData0['state'] === 'LOCK'
-        currentWeight = parseFloat(jsonData1['weight'])
-    }
-
+    const state = mailboxState.states[0]
     const response = {
-        events: results.map((event) => {
+        events: events.map((event) => {
             let jsonData = JSON.parse(event.json_data ?? "[]")
-
 
             return {
                 event_type: event.event_type,
@@ -66,9 +39,11 @@ export async function GET(
                 data: jsonData
             }
         }),
-        locked,
-        current_weight: currentWeight,
-        device_id: userData.device_auth_token
+        locked: state.locked,
+        is_online: state.online,
+        live_weight: state.currentWeight,
+        current_weight: state.lockedWeight,
+        device_id: deviceUuid
     }
 
     return NextResponse.json(response, {status: 200})

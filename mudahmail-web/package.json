@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "proto": "protoc -I ./src/common/service --ts_out ./src/common/service --ts_opt optimize_code_size ./src/common/service/*.proto && pnpm format",
     "lint": "next lint"
   },
   "dependencies": {
@@ -14,7 +15,11 @@
     "@chakra-ui/react": "^2.8.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@grpc/grpc-js": "^1.9.9",
     "@prisma/client": "^5.4.2",
+    "@protobuf-ts/grpc-transport": "^2.9.1",
+    "@protobuf-ts/runtime": "^2.9.1",
+    "@protobuf-ts/runtime-rpc": "^2.9.1",
     "@theinternetfolks/snowflake": "^1.3.0",
     "@types/node": "^20.5.4",
     "@types/react": "^18.2.21",
@@ -45,6 +50,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@protobuf-ts/plugin": "^2.9.1",
+    "@protobuf-ts/protoc": "^2.9.1",
     "@types/bcrypt": "^5.0.1",
     "@types/request-ip": "^0.0.39",
     "prisma": "^5.4.2"

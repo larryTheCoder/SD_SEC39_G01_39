@@ -25,3 +25,5 @@ export const SHA256_SECRET = config('SHA256_SECRET', string)
 export const NEXTAUTH_URL = config('NEXTAUTH_URL', string)
 
 export const REDIS_URL = config('REDIS_URL', string)
+export const MUDAHMAIL_HOST = config('MUDAHMAIL_HOST', string)
+export const ADMIN_JWT_KEY = config('ADMIN_JWT_KEY', string)

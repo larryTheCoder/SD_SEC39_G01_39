@@ -12,6 +12,8 @@ type MailboxTypeRaw = {
     events: MailboxEvent[];
     locked: boolean
     current_weight: number,
+    live_weight: number,
+    is_online: boolean,
     device_id: string
 };
 
@@ -25,6 +27,8 @@ export function Dashboard() {
     const [types, setTypes] = useState<MailboxData[]>([])
     const [allTypes, setAllTypes] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
+    const [liveWeight, setLiveWeight] = useState("0.0")
+    const [isOnline, setOnline] = useState(false)
     const [deviceUUID, setDeviceUUID] = useState("Loading...")
     const [doorStatus, setDoorStatus] = useState(<div className="col-span-3"><p>Loading...</p></div>)
 
@@ -35,6 +39,8 @@ export function Dashboard() {
             const mailboxEvents: MailboxEvent[] = mailboxData.events;
 
             setDeviceUUID(mailboxData.device_id)
+            setLiveWeight(mailboxData.live_weight.toFixed(2))
+            setOnline(mailboxData.is_online)
 
             if (mailboxData.locked) {
                 setDoorStatus(
@@ -52,33 +58,25 @@ export function Dashboard() {
             }
 
             setTypes(mailboxEvents.map<MailboxData>((event): MailboxData => {
-                let data = "";
-                let type = "Weight Event"
-                if (event.event_type === "DOOR_STATE" || event.event_type === "DOOR_STATUS") {
-                    type = event.event_type === "DOOR_STATE" ? "Door State" : "Door Event"
+                console.log(event)
 
-                    switch (event.data.state) {
-                        case "LOCK":
-                            data = "Locked"
-                            break;
-                        case "UNLOCKED":
-                            data = "Unlocked"
-                            break;
-                        case "OPEN":
-                            data = "Door Opened"
-                            break;
-                        case "CLOSE":
-                            data = "Door Closed"
-                            break;
-                    }
-                } else {
-                    data = event.data.weight.toFixed(2) + "kg";
+                switch (event.event_type) {
+                    case 'DOOR_STATE_OPEN':
+                        return {name: "Door State", value: "Open", timestamp: new Date(event.timestamp)}
+                    case 'DOOR_STATE_CLOSED':
+                        return {name: "Door State", value: "Closed", timestamp: new Date(event.timestamp)}
+                    case 'DOOR_LOCKED':
+                        return {name: "Door Security", value: "Locked", timestamp: new Date(event.timestamp)}
+                    case 'DOOR_UNLOCKED':
+                        return {name: "Door Security", value: "Unlocked", timestamp: new Date(event.timestamp)}
+                    case 'WEIGHT_STATE_UPDATE':
+                        return {name: "Parcel Weight", value: event.data.weight.toFixed(2) + "kg", timestamp: new Date(event.timestamp)}
                 }
 
                 return {
-                    name: type,
+                    name: event.event_type,
                     timestamp: new Date(event.timestamp),
-                    value: data
+                    value: "Unknown"
                 };
             }))
 
@@ -117,6 +115,14 @@ export function Dashboard() {
                             <p className="font-medium">Door Status:</p>
                         </div>
                         {doorStatus}
+                        <div className="col-span-6">
+                            <p className="font-medium">Device Status:</p>
+                            <p>{isOnline ? `Online` : `Offline`}</p>
+                        </div>
+                        <div className="col-span-6">
+                            <p className="font-medium">Live weight:</p>
+                            <p>{liveWeight}kg</p>
+                        </div>
                     </div>
                 </div>
             </div>
