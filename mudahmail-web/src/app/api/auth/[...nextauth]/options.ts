@@ -33,7 +33,7 @@ export const config: NextAuthOptions = {
                 });
 
                 if (userData !== null && await bcrypt.compare(credentials.password, userData.password)) {
-                    const data = {email: userData.email, profile: userData.userPicturePath, role: userData.isAdmin}
+                    const data = {email: userData.email, profile: userData.userPicturePath, role: userData.isAdmin ? Role.admin : Role.user}
                     await client.set(`user_data:${userData.userSnowflake}`, JSON.stringify(data))
 
                     return {email: userData.email, id: userData.userSnowflake, role: userData.isAdmin ? Role.admin : Role.user}
@@ -90,7 +90,7 @@ async function doesThings(token: JWT) {
             }
 
             token.email = user.email;
-            token.role = user.isAdmin ? Role.admin : Role.user;
+            token.role = user.role;
         } else {
             token.role = Role.user;
         }

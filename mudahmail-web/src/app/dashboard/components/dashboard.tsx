@@ -58,8 +58,6 @@ export function Dashboard() {
             }
 
             setTypes(mailboxEvents.map<MailboxData>((event): MailboxData => {
-                console.log(event)
-
                 switch (event.event_type) {
                     case 'DOOR_STATE_OPEN':
                         return {name: "Door State", value: "Open", timestamp: new Date(event.timestamp)}

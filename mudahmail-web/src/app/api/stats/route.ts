@@ -25,7 +25,7 @@ export async function GET(
     const deviceUuid = events[0].device_auth_token;
     const {response: mailboxState} = await client.getMailboxStates(
         {clientUuid: [deviceUuid as string]},
-        {timeout: 3_000, meta: {"Authorization": "Bearer " + ADMIN_JWT_KEY}}
+        {timeout: 3_000}
     )
 
     const state = mailboxState.states[0]
