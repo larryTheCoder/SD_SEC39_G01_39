@@ -32,7 +32,7 @@ type AdminUserList = {
 
 export function AdminControlPanel() {
     const [types, setUserList] = useState<AdminUserList[]>([])
-    const [openModal, setOpenModal] = useState(false)
+    const [openModal, setOpenModal] = useState<string | null>(null)
     const [successModal, setOpenSuccessModal] = useState(false)
     const [failModal, setFailOpenModel] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -164,7 +164,7 @@ export function AdminControlPanel() {
                                                     </div>
                                                 </td>
                                                 <td className="p-4 space-x-2 whitespace-nowrap">
-                                                    <button type="button" onClick={() => setOpenModal(true)} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300">
+                                                    <button type="button" onClick={() => setOpenModal(data.device)} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300">
                                                         <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                             <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
                                                             <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
@@ -179,7 +179,7 @@ export function AdminControlPanel() {
                                                         Delete user
                                                     </button>
 
-                                                    <Modal show={openModal} size="4xl" onClose={() => setOpenModal(false)}>
+                                                    <Modal show={openModal !== null} size="4xl" onClose={() => setOpenModal(null)}>
                                                         <Modal.Header>Device History</Modal.Header>
                                                         <Modal.Body>
                                                             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -192,7 +192,7 @@ export function AdminControlPanel() {
                                                                 </thead>
                                                                 <tbody className="overflow-y-scroll h-72">
                                                                 {
-                                                                    data.eventsParsed.map((event, eventKey) => (
+                                                                    types.find(o => o.device === openModal)?.eventsParsed.map((event, eventKey) => (
                                                                         <tr key={eventKey} className="border-b dark:border-gray-700">
                                                                             <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{event.name}</th>
                                                                             <td className="px-4 py-3">{event.timestamp.toLocaleString('default', {timeZone: 'Asia/Kuala_Lumpur'})}</td>
@@ -204,14 +204,14 @@ export function AdminControlPanel() {
                                                             </table>
                                                         </Modal.Body>
                                                         <Modal.Footer>
-                                                            <Button onClick={() => unlockDevice(data.device)}>
+                                                            <Button onClick={() => unlockDevice(openModal as string)}>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={`h-3.5 w-3.5 mr-2 ${deviceLoading ? `animate-spin` : ``}`}>
                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
                                                                 </svg>
 
                                                                 Unlock Device
                                                             </Button>
-                                                            <Button color="gray" onClick={() => setOpenModal(false)}>
+                                                            <Button color="gray" onClick={() => setOpenModal(null)}>
                                                                 Close
                                                             </Button>
                                                         </Modal.Footer>
