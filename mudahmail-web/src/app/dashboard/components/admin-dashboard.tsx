@@ -190,7 +190,7 @@ export function AdminControlPanel() {
                                                                     <th scope="col" className="px-4 py-3">Data value</th>
                                                                 </tr>
                                                                 </thead>
-                                                                <tbody className="overflow-y-scroll h-72">
+                                                                <tbody className="overflow-y-scroll">
                                                                 {
                                                                     types.find(o => o.device === openModal)?.eventsParsed.map((event, eventKey) => (
                                                                         <tr key={eventKey} className="border-b dark:border-gray-700">
