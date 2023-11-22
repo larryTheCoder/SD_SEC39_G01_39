@@ -165,7 +165,7 @@ export function Dashboard() {
                             </div>
                         </div>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto h-72">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                             <thead className="display:block text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
@@ -174,7 +174,7 @@ export function Dashboard() {
                                 <th scope="col" className="px-4 py-3">Data value</th>
                             </tr>
                             </thead>
-                            <tbody className="overflow-y-scroll h-72">
+                            <tbody className="overflow-y-scroll">
                             {
                                 types.map((data) => (
                                     <tr key={i++} className="border-b dark:border-gray-700">
