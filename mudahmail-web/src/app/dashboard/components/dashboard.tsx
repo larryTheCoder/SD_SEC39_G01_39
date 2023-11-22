@@ -1,31 +1,36 @@
-import React, {useEffect, useState} from "react";
-import axios from "axios";
+import React, {useEffect, useState} from "react"
+import axios from "axios"
 
 // Define the desired type
 type MailboxEvent = {
-    event_type: string;
-    timestamp: string;
-    data: any;
+    event_type: string
+    timestamp: string
+    data: any
 }
 
 type MailboxTypeRaw = {
-    events: MailboxEvent[];
+    events: MailboxEvent[]
     locked: boolean
     current_weight: number,
     live_weight: number,
     is_online: boolean,
     device_id: string
-};
+}
 
 type MailboxData = {
-    name: string;
-    timestamp: Date;
-    value: string;
+    name: string
+    timestamp: Date
+    value: string
+}
+
+type FilterMetadata = {
+    name: string,
+    filter: boolean
 }
 
 export function Dashboard() {
     const [types, setTypes] = useState<MailboxData[]>([])
-    const [allTypes, setAllTypes] = useState<string[]>([])
+    const [allTypes, setAllTypes] = useState<FilterMetadata[]>([])
     const [loading, setLoading] = useState(true)
     const [liveWeight, setLiveWeight] = useState("0.0")
     const [isOnline, setOnline] = useState(false)
@@ -35,8 +40,8 @@ export function Dashboard() {
     const fetchData = async () => {
         setLoading(true)
         try {
-            const mailboxData: MailboxTypeRaw = (await axios.get("/api/stats")).data;
-            const mailboxEvents: MailboxEvent[] = mailboxData.events;
+            const mailboxData: MailboxTypeRaw = (await axios.get("/api/stats")).data
+            const mailboxEvents: MailboxEvent[] = mailboxData.events
 
             setDeviceUUID(mailboxData.device_id)
             setLiveWeight(mailboxData.live_weight.toFixed(2))
@@ -75,12 +80,29 @@ export function Dashboard() {
                     name: event.event_type,
                     timestamp: new Date(event.timestamp),
                     value: "Unknown"
-                };
+                }
             }))
 
-            setAllTypes(Array.from(new Set(mailboxEvents.map((data) => {
-                return data.event_type
-            }))))
+            const eventsList = Array.from(new Set(mailboxEvents.map((data) => {
+                switch (data.event_type) {
+                    case 'DOOR_STATE_OPEN':
+                        return "Door State"
+                    case 'DOOR_STATE_CLOSED':
+                        return "Door State"
+                    case 'DOOR_LOCKED':
+                        return "Door Security"
+                    case 'DOOR_UNLOCKED':
+                        return "Door Security"
+                    case 'WEIGHT_STATE_UPDATE':
+                        return "Parcel Weight"
+                }
+
+                return "Unknown"
+            })))
+
+            setAllTypes(eventsList.map(event => {
+                return {name: event, filter: true}
+            }))
         } catch (e) {
             console.log(e)
         }
@@ -90,9 +112,7 @@ export function Dashboard() {
 
     useEffect(() => {
         fetchData().catch(console.error)
-    }, []);
-
-    let i = 0;
+    }, [])
 
     return (
         <>
@@ -153,10 +173,14 @@ export function Dashboard() {
                                     <h6 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">Filter by</h6>
                                     <ul className="space-y-2 text-sm" aria-labelledby="filterDropdownButton">
                                         {
-                                            allTypes.map((data) => (
-                                                <li key={data} className="flex items-center">
-                                                    <input id={data} type="checkbox" checked={true} className="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"/>
-                                                    <label htmlFor={data} className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{data}</label>
+                                            allTypes.map((data, key) => (
+                                                <li key={key} className="flex items-center">
+                                                    <input id={data.name} type="checkbox" checked={data.filter} onClick={() => {
+                                                        setAllTypes(allTypes.map(data1 => {
+                                                            return {name: data1.name, filter: (data1.name == data.name) ? !data1.filter : data1.filter}
+                                                        }))
+                                                    }} className="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"/>
+                                                    <label htmlFor={data.name} className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{data.name}</label>
                                                 </li>
                                             ))
                                         }
@@ -176,8 +200,8 @@ export function Dashboard() {
                             </thead>
                             <tbody className="overflow-y-scroll">
                             {
-                                types.map((data) => (
-                                    <tr key={i++} className="border-b dark:border-gray-700">
+                                types.filter(data => allTypes.find(o => o.name == data.name)?.filter).map((data, key) => (
+                                    <tr key={key} className="border-b dark:border-gray-700">
                                         <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{data.name}</th>
                                         <td className="px-4 py-3">{data.timestamp.toLocaleString('default', {timeZone: 'Asia/Kuala_Lumpur'})}</td>
                                         <td className="px-4 py-3">{data.value}</td>
