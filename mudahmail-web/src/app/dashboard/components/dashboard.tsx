@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from "react"
 import axios from "axios"
+import {Button} from "flowbite-react";
+import {HiLockClosed, HiLockOpen} from "react-icons/hi";
 
 // Define the desired type
 type MailboxEvent = {
@@ -35,6 +37,8 @@ export function Dashboard() {
     const [liveWeight, setLiveWeight] = useState("0.0")
     const [isOnline, setOnline] = useState(false)
     const [deviceUUID, setDeviceUUID] = useState("Loading...")
+    const [isLocked, setLocked] = useState<boolean | null>(null)
+    const [unlockProcessing, setProcessing] = useState<boolean>(false)
     const [doorStatus, setDoorStatus] = useState(<div className="col-span-3"><p>Loading...</p></div>)
 
     const fetchData = async () => {
@@ -61,6 +65,8 @@ export function Dashboard() {
                     </div>
                 )
             }
+
+            setLocked(mailboxData.locked)
 
             setTypes(mailboxEvents.map<MailboxData>((event): MailboxData => {
                 switch (event.event_type) {
@@ -114,6 +120,30 @@ export function Dashboard() {
         fetchData().catch(console.error)
     }, [])
 
+    const unlockDevice = async (doLock: boolean) => {
+        setProcessing(true)
+
+        try {
+            const formData = new FormData()
+            formData.set("type", "device_lock_state")
+            formData.set("toggle", doLock ? "true" : "false")
+
+            await axios.put('/api/update', formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                }
+            })
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response !== undefined) {
+                const response = error.response;
+            }
+        }
+
+        setProcessing(false)
+
+        await fetchData()
+    }
+
     return (
         <>
             <div className="mb-4 col-span-full xl:mb-2">
@@ -140,6 +170,21 @@ export function Dashboard() {
                         <div className="col-span-6">
                             <p className="font-medium">Live weight:</p>
                             <p>{liveWeight}kg</p>
+                        </div>
+
+                        <div className="col-span-6">
+                            <Button color="purple" disabled={isLocked == null} onClick={() => unlockDevice(!isLocked)} isProcessing={unlockProcessing}>
+
+                                {isLocked ?
+                                    <>
+                                        <HiLockClosed className="mr-2 h-5 w-5"/>
+                                        Lock Device
+                                    </> :
+                                    <>
+                                        <HiLockOpen className="mr-2 h-5 w-5"/>
+                                        Unlock Device
+                                    </>}
+                            </Button>
                         </div>
                     </div>
                 </div>

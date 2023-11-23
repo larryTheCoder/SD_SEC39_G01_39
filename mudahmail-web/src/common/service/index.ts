@@ -25,4 +25,4 @@ const transport = new BearerGrpcTransport({
     channelCredentials: ChannelCredentials.createSsl()
 })
 
-export const client = new ServerClient(transport as any)
+export const mailboxClient = new ServerClient(transport as any)

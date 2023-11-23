@@ -2,7 +2,7 @@ import {NextRequest, NextResponse} from "next/server";
 import {prisma} from "@/libs/database";
 import {getToken} from "next-auth/jwt";
 import {Role} from "@/interface";
-import {client} from "@/common/service";
+import {mailboxClient} from "@/common/service";
 import {S3_BUCKET, S3_HOST} from "@/libs/config";
 import {RpcError} from "@protobuf-ts/runtime-rpc";
 
@@ -23,7 +23,7 @@ export async function GET(
         orderBy: {device_auth_token: "desc"}
     })
 
-    const {response: mailboxState} = await client.getMailboxStates(
+    const {response: mailboxState} = await mailboxClient.getMailboxStates(
         {clientUuid: allUserData.map(data => data.device_auth_token as string)},
         {timeout: 3_000}
     )
@@ -82,7 +82,7 @@ export async function PUT(
     const toggleLock = (formData.get("toggle") as string) === "true"
 
     try {
-        const {response: mailboxState} = await client.setDoorLockStatus(
+        const {response: mailboxState} = await mailboxClient.setDoorLockStatus(
             {toggleLock: toggleLock},
             {timeout: 3_000, meta: {Authority: deviceId}}
         )

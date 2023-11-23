@@ -6,6 +6,8 @@ import {s3} from "@/libs/s3";
 import {S3_BUCKET} from "@/libs/config";
 import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
 import bcrypt from "bcrypt";
+import {RpcError} from "@protobuf-ts/runtime-rpc";
+import {mailboxClient} from "@/common/service";
 
 const emailRegex = /.[A-Z0-9._%+\-]{1,16}.@.[A-Z0-9.\-]{1,16}.[.].[A-Z]+/i
 const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*\-]).{8,}/
@@ -142,6 +144,32 @@ export async function PUT(
             }
         } catch (e) {
             return NextResponse.json({message: 'The email is currently in use.'}, {status: 409})
+        }
+    } else if (formType === "device_lock_state") {
+        const toggleLock = (formData.get("toggle") as string) === "true"
+
+        try {
+            let userData = await prisma.userData.findFirst({
+                where: {AND: [{userSnowflake: claims.id}]},
+                select: {device_auth_token: true}
+            });
+
+            if (userData === null) {
+                return NextResponse.json({message: "User is not authenticated."}, {status: 400})
+            }
+
+            const {response: mailboxState} = await mailboxClient.setDoorLockStatus(
+                {toggleLock: toggleLock},
+                {timeout: 3_000, meta: {Authority: userData.device_auth_token as string}}
+            )
+
+            return NextResponse.json({}, {status: 200})
+        } catch (e) {
+            if (e instanceof RpcError) {
+                if (e.code == "NOT_FOUND") {
+                    return NextResponse.json({message: "Device is currently offline, try again later."}, {status: 404})
+                }
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import {getToken} from "next-auth/jwt";
 import {prisma} from "@/libs/database";
-import {client} from "@/common/service";
+import {mailboxClient} from "@/common/service";
 import {EventData} from ".prisma/client";
 import {ADMIN_JWT_KEY} from "@/libs/config";
 
@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const deviceUuid = events[0].device_auth_token;
-    const {response: mailboxState} = await client.getMailboxStates(
+    const {response: mailboxState} = await mailboxClient.getMailboxStates(
         {clientUuid: [deviceUuid as string]},
         {timeout: 3_000}
     )
