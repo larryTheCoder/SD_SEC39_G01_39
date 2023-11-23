@@ -173,8 +173,7 @@ export function Dashboard() {
                         </div>
 
                         <div className="col-span-6">
-                            <Button color="purple" disabled={isLocked == null} onClick={() => unlockDevice(!isLocked)} isProcessing={unlockProcessing}>
-
+                            <Button color="purple" className="w-full" disabled={isLocked == null} onClick={() => unlockDevice(!isLocked)} isProcessing={unlockProcessing}>
                                 {isLocked ?
                                     <>
                                         <HiLockOpen className="mr-2 h-5 w-5"/>
@@ -183,7 +182,8 @@ export function Dashboard() {
                                     <>
                                         <HiLockClosed className="mr-2 h-5 w-5"/>
                                         Lock Device
-                                    </>}
+                                    </>
+                                }
                             </Button>
                         </div>
                     </div>
