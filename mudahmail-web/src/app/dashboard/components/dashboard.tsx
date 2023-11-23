@@ -177,12 +177,12 @@ export function Dashboard() {
 
                                 {isLocked ?
                                     <>
-                                        <HiLockClosed className="mr-2 h-5 w-5"/>
-                                        Lock Device
-                                    </> :
-                                    <>
                                         <HiLockOpen className="mr-2 h-5 w-5"/>
                                         Unlock Device
+                                    </> :
+                                    <>
+                                        <HiLockClosed className="mr-2 h-5 w-5"/>
+                                        Lock Device
                                     </>}
                             </Button>
                         </div>
